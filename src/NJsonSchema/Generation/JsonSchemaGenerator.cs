@@ -348,6 +348,7 @@ namespace NJsonSchema.Generation
 
             foreach (var enumName in Enum.GetNames(type))
             {
+                var attributes = type.GetTypeInfo().GetDeclaredField(enumName).GetCustomAttributes(); // EnumMember only checked if StringEnumConverter is used
                 if (typeDescription.Type == JsonObjectType.Integer)
                 {
                     var value = Convert.ChangeType(Enum.Parse(type, enumName), Enum.GetUnderlyingType(type));
@@ -355,7 +356,6 @@ namespace NJsonSchema.Generation
                 }
                 else
                 {
-                    var attributes = type.GetTypeInfo().GetDeclaredField(enumName).GetCustomAttributes(); // EnumMember only checked if StringEnumConverter is used
                     dynamic enumMemberAttribute = TryGetAttribute(attributes, "System.Runtime.Serialization.EnumMemberAttribute");
                     if (enumMemberAttribute != null && !string.IsNullOrEmpty(enumMemberAttribute.Value))
                         schema.Enumeration.Add((string)enumMemberAttribute.Value);
@@ -363,7 +363,15 @@ namespace NJsonSchema.Generation
                         schema.Enumeration.Add(enumName);
                 }
 
-                schema.EnumerationNames.Add(enumName);
+                dynamic displayAttribute = TryGetAttribute(attributes, "System.ComponentModel.DataAnnotations.DisplayAttribute");
+                if (displayAttribute != null && !string.IsNullOrEmpty(displayAttribute.Name))
+                {
+                    schema.EnumerationNames.Add(displayAttribute.Name);
+
+                }
+                else {
+                    schema.EnumerationNames.Add(enumName);
+                }
             }
         }
 
