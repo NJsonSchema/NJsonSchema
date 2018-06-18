@@ -5,6 +5,7 @@
 {{ TypeAccessModifier }} enum {{ Name }}
 {
 {% for enum in Enums -%}
+    [System.ComponentModel.Description("{{ enum.Description }}")]
 {%   if IsStringEnum -%}
     [System.Runtime.Serialization.EnumMember(Value = "{{ enum.Value }}")]
 {%   endif -%}

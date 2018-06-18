@@ -51,7 +51,18 @@ namespace NJsonSchema.CodeGeneration.CSharp.Models
         {
             get
             {
+             
                 var entries = new List<EnumerationItemModel>();
+                
+                Dictionary<string, object> Descriptions = new Dictionary<string, object>();
+                Dictionary<string, object> Titles = new Dictionary<string, object>();
+
+                if (_schema.ExtensionData.ContainsKey("elaboration"))
+                    Descriptions = (Dictionary<string, object>)_schema.ExtensionData["elaboration"];
+
+                if (_schema.ExtensionData.ContainsKey("options"))
+                    Titles = (Dictionary<string, object>)_schema.ExtensionData["options"];
+                
                 for (var i = 0; i < _schema.Enumeration.Count; i++)
                 {
                     var value = _schema.Enumeration.ElementAt(i);
@@ -61,11 +72,16 @@ namespace NJsonSchema.CodeGeneration.CSharp.Models
                             _schema.EnumerationNames.ElementAt(i) :
                             _schema.Type.HasFlag(JsonObjectType.Integer) ? "_" + value : value.ToString();
 
+                        string MyDesc = value.ToString();
+                        if (Descriptions.Count == _schema.Enumeration.Count)
+                            MyDesc = Descriptions[value.ToString()].ToString();
+
                         entries.Add(new EnumerationItemModel
                         {
                             Name = _settings.EnumNameGenerator.Generate(i, name, value, _schema),
                             Value = value.ToString(),
-                            InternalValue = _schema.Type.HasFlag(JsonObjectType.Integer) ? value.ToString() : i.ToString()
+                            InternalValue = _schema.Type.HasFlag(JsonObjectType.Integer) ? value.ToString() : i.ToString(),
+                            Description = MyDesc
                         });
                     }
                 }
