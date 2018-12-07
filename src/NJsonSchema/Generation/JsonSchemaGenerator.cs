@@ -567,12 +567,18 @@ namespace NJsonSchema.Generation
 #endif
 
             var contract = Settings.ResolveContract(type);
+            var baseType = type.GetTypeInfo().BaseType;
+            if (baseType == typeof(object) || baseType == typeof(ValueType))
+            {
+                baseType = null;
+            }
 
             var allowedProperties = GetTypeProperties(type);
             var objectContract = contract as JsonObjectContract;
             if (objectContract != null && allowedProperties == null)
             {
-                foreach (var property in objectContract.Properties.Where(p => p.DeclaringType == type))
+                foreach (var property in objectContract.Properties.Where(p => p.DeclaringType == type || 
+                                                                              (baseType != null && p.DeclaringType == baseType)))
                 {
                     bool shouldSerialize;
                     try
@@ -589,7 +595,7 @@ namespace NJsonSchema.Generation
                         var info = propertiesAndFields.FirstOrDefault(p => p.Name == property.UnderlyingName);
                         var propertyInfo = info as PropertyInfo;
 #if !LEGACY
-                        if (Settings.GenerateAbstractProperties || propertyInfo == null ||
+                        if (type.GetTypeInfo().IsInterface || Settings.GenerateAbstractProperties || propertyInfo == null ||
                             (propertyInfo.GetMethod?.IsAbstract != true && propertyInfo.SetMethod?.IsAbstract != true))
 #else
                         if (Settings.GenerateAbstractProperties || propertyInfo == null ||
@@ -653,9 +659,10 @@ namespace NJsonSchema.Generation
             if (Settings.GenerateKnownTypes)
             {
                 var knownTypeAttributes = attributes
-                   // Known types of inherited classes will be generated later (in GenerateInheritanceAsync)
-                   .Where(a => a.GetType().IsAssignableTo("KnownTypeAttribute", TypeNameStyle.Name))
-                   .OfType<Attribute>();
+                    // Known types of inherited classes will be generated later (in GenerateInheritanceAsync)
+                    .Where(a => a.GetType().IsAssignableTo("KnownTypeAttribute", TypeNameStyle.Name) ||
+                                a.GetType().IsAssignableTo("NJsonKnownTypeAttribute", TypeNameStyle.Name))
+                    .OfType<Attribute>();
 
                 foreach (dynamic attribute in knownTypeAttributes)
                 {
@@ -675,7 +682,21 @@ namespace NJsonSchema.Generation
                         }
                     }
                     else
-                        throw new ArgumentException($"A KnownType attribute on {type.FullName} does not specify a type or a method name.", nameof(type));
+                    {
+#if !NETSTANDARD1_0
+                        var knownTypes = AppDomain.CurrentDomain.GetAssemblies().SelectMany(assembly => assembly.GetTypes())
+                            .Where(t => type.IsAssignableFrom(t));
+
+                        foreach (var knownType in knownTypes)
+                        {
+                            await AddKnownTypeAsync(knownType, schemaResolver).ConfigureAwait(false);
+                        }
+#else
+                        throw new ArgumentException(
+                            $"A KnownType attribute on {type.FullName} does not specify a type or a method name.",
+                            nameof(type));
+#endif
+                    }
                 }
             }
 
@@ -704,6 +725,18 @@ namespace NJsonSchema.Generation
         private async Task<JsonSchema4> GenerateInheritanceAsync(Type type, JsonSchema4 schema, JsonSchemaResolver schemaResolver)
         {
             var baseType = type.GetTypeInfo().BaseType;
+
+            
+            if (baseType == null || baseType == typeof(object) || baseType == typeof(ValueType))
+            {
+#if NETSTANDARD1_0
+                baseType = type.GetTypeInfo().ImplementedInterfaces.FirstOrDefault();
+#else
+                baseType = type.GetTypeInfo().GetInterfaces().FirstOrDefault();
+#endif
+            }
+
+            // Should be foreach for each interface?
             if (baseType != null && baseType != typeof(object) && baseType != typeof(ValueType))
             {
                 if (baseType.GetTypeInfo().GetCustomAttributes(false).TryGetIfAssignableTo("JsonSchemaIgnoreAttribute", TypeNameStyle.Name) == null &&

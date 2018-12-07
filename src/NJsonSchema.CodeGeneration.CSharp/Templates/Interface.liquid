@@ -1,0 +1,48 @@
+﻿{% if HasDescription -%}
+/// <summary>{{ Description | csharpdocs }}</summary>
+{% endif -%}
+{% if HasDiscriminator -%}
+[Newtonsoft.Json.JsonConverter(typeof(JsonInheritanceConverter), "{{ Discriminator }}")]
+{% for derivedClass in DerivedClasses -%}
+[JsonInheritanceAttribute("{{ derivedClass.Discriminator }}", typeof({{ derivedClass.ClassName }}))]
+{% endfor -%}
+{% endif -%}
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "{{ ToolchainVersion }}")]
+{% if InheritsExceptionSchema -%}
+[Newtonsoft.Json.JsonObjectAttribute]
+{% endif -%}
+{% template Class.Annotations %}
+{{ TypeAccessModifier }} partial interface {{ClassName}} {% template Class.Inheritance %}
+{
+{% for property in Properties -%}
+{%   if property.HasDescription -%}
+    /// <summary>{{ property.Description | csharpdocs }}</summary>
+{%   endif -%}
+    [Newtonsoft.Json.JsonProperty("{{ property.Name }}", Required = {{ property.JsonPropertyRequiredCode }}{% if property.IsStringEnumArray %}, ItemConverterType = typeof(Newtonsoft.Json.Converters.StringEnumConverter){% endif %})]
+{%   if property.RenderRequiredAttribute -%}
+    [System.ComponentModel.DataAnnotations.Required{% if property.AllowEmptyStrings %}(AllowEmptyStrings = true){% endif %}]
+{%   endif -%}
+{%   if property.RenderRangeAttribute -%}
+    [System.ComponentModel.DataAnnotations.Range({{ property.RangeMinimumValue }}, {{ property.RangeMaximumValue }})]
+{%   endif -%}
+{%   if property.RenderStringLengthAttribute -%}
+    [System.ComponentModel.DataAnnotations.StringLength({{ property.StringLengthMaximumValue }}{% if property.StringLengthMinimumValue > 0 %}, MinimumLength = {{ property.StringLengthMinimumValue }}{% endif %})]
+{%   endif -%}
+{%   if property.RenderRegularExpressionAttribute -%}
+    [System.ComponentModel.DataAnnotations.RegularExpression(@"{{ property.RegularExpressionValue }}")]
+{%   endif -%}
+{%   if property.IsStringEnum -%}
+    [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
+{%   endif -%}
+{%   if property.IsDate and UseDateFormatConverter -%}
+    [Newtonsoft.Json.JsonConverter(typeof(DateFormatConverter))]
+{%   endif -%}
+    {% template Class.Property.Annotations %}
+    {{ property.Type }} {{ property.PropertyName }} { get; {% if property.HasSetter and RenderRecord == false %}set; {% endif %}}
+
+{% endfor -%}
+{% if HasAdditionalPropertiesType -%}
+        [Newtonsoft.Json.JsonExtensionData]
+        System.Collections.Generic.IDictionary<string, {{ AdditionalPropertiesType }}> AdditionalProperties { get; {{PropertySetterAccessModifier}}set; }
+{% endif -%}
+}

@@ -112,7 +112,9 @@ namespace NJsonSchema.CodeGeneration.CSharp
 
             RenamePropertyWithSameNameAsClass(typeName, model.Properties);
 
-            var template = Settings.TemplateFactory.CreateTemplate("CSharp", "Class", model);
+            var template = !model.IsAbstract
+                ? Settings.TemplateFactory.CreateTemplate("CSharp", "Class", model)
+                : Settings.TemplateFactory.CreateTemplate("CSharp", "Interface", model);
             return new CodeArtifact(typeName, model.BaseClassName, CodeArtifactType.Class, CodeArtifactLanguage.CSharp, template);
         }
 

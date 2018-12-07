@@ -24,8 +24,13 @@
   <ItemGroup>
     <None Remove="Templates\Class.Body.liquid" />
     <None Remove="Templates\Class.Constructor.Record.liquid" />
+    <None Remove="Templates\Interface.liquid" />
   </ItemGroup>
   <ItemGroup>
+    <EmbeddedResource Include="Templates\Interface.liquid">
+      <CustomToolNamespace>
+      </CustomToolNamespace>
+    </EmbeddedResource>
     <EmbeddedResource Include="Templates\Class.Annotations.liquid">
       <CustomToolNamespace>
       </CustomToolNamespace>

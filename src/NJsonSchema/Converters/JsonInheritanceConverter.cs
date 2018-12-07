@@ -216,7 +216,8 @@ namespace NJsonSchema.Converters
             do
             {
                 var knownTypeAttributes = type.GetTypeInfo().GetCustomAttributes(false)
-                    .Where(a => a.GetType().Name == "KnownTypeAttribute");
+                    .Where(a => a.GetType().Name == "KnownTypeAttribute" ||
+                                a.GetType().Name == "NJsonKnownTypeAttribute");
                 foreach (dynamic attribute in knownTypeAttributes)
                 {
                     if (attribute.Type != null && attribute.Type.Name == discriminator)
@@ -234,6 +235,13 @@ namespace NJsonSchema.Converters
                             }
                             return null;
                         }
+                    }
+                    else
+                    {
+#if !NETSTANDARD1_0
+                        return AppDomain.CurrentDomain.GetAssemblies().SelectMany(assembly => assembly.GetTypes())
+                            .Where(t => type.IsAssignableFrom(t)).FirstOrDefault(t => t.Name == discriminator);
+#endif
                     }
                 }
                 type = type.GetTypeInfo().BaseType;

@@ -13,9 +13,67 @@ using Xunit;
 using System.IO;
 using System.Reflection;
 using System.CodeDom.Compiler;
+using NJsonSchema.Annotations;
 
 namespace NJsonSchema.CodeGeneration.Tests
 {
+    public class ClassTestModels
+    {
+        [JsonConverter(typeof(JsonInheritanceConverter), "discriminator")]
+        [NJsonKnownType(typeof(ChildClass1))]
+        [NJsonKnownType(typeof(ChildClass2))]
+        public abstract class ParentType
+        {
+            public string Prop1 { get; set; }
+        }
+
+        public class ChildClass1 : ParentType
+        {
+            public string Prop2 { get; set; }
+        }
+
+        public class ChildClass2 : ParentType
+        {
+            public string Prop3 { get; set; }
+        }
+
+        public class Foo
+        {
+            public ParentType Bar { get; set; }
+        }
+    }
+
+    public class InterfaceTestModels
+    {
+        [JsonConverter(typeof(JsonInheritanceConverter), "discriminator")]
+        [NJsonKnownType(typeof(ChildClass1))]
+        [NJsonKnownType(typeof(ChildClass2))]
+        // ReSharper disable once InconsistentNaming
+        public interface ParentType
+        {
+            string Prop1 { get; set; }
+        }
+
+        // Order of properties is important for the test to work
+        public class ChildClass1 : ParentType
+        {
+            public string Prop2 { get; set; }
+            public string Prop1 { get; set; }
+        }
+
+        // Order of properties is important for the test to work
+        public class ChildClass2 : ParentType
+        {
+            public string Prop3 { get; set; }
+            public string Prop1 { get; set; }
+        }
+
+        public class Foo
+        {
+            public ParentType Bar { get; set; }
+        }
+    }
+    
     public class Container
     {
         public Animal Animal { get; set; }
@@ -64,6 +122,28 @@ namespace NJsonSchema.CodeGeneration.Tests
 
     public class InheritanceSerializationTests
     {
+        [Fact]
+        public async Task Generated_Class_and_Interface_json_and_code_are_equal()
+        {
+            //// Arrange
+            var interfaceSchema = await JsonSchema4.FromTypeAsync<InterfaceTestModels.Foo>();
+            var classSchema = await JsonSchema4.FromTypeAsync<ClassTestModels.Foo>();
+
+            //// Act
+            var interfaceJson = interfaceSchema.ToJson();
+            var classJson = classSchema.ToJson();
+
+            var interfaceGenerator = new CSharpGenerator(interfaceSchema, new CSharpGeneratorSettings { ClassStyle = CSharpClassStyle.Poco });
+            var interfaceCode = interfaceGenerator.GenerateFile("Foo");
+
+            var classGenerator = new CSharpGenerator(classSchema, new CSharpGeneratorSettings { ClassStyle = CSharpClassStyle.Poco });
+            var classCode = classGenerator.GenerateFile("Foo");
+            
+            //// Assert
+            Assert.Equal(interfaceJson, classJson);
+            Assert.Equal(interfaceCode, classCode);
+        }
+
         [Fact]
         public void When_JsonInheritanceConverter_is_passed_null_it_deserializes_to_null()
         {

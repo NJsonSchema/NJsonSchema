@@ -128,7 +128,9 @@ namespace NJsonSchema.CodeGeneration
 
         private static bool IsObject(object value)
         {
-            return value != null && value.GetType().GetTypeInfo().IsClass && !(value is string);
+            return value != null &&
+                   (value.GetType().GetTypeInfo().IsClass || value.GetType().GetTypeInfo().IsInterface) &&
+                   !(value is string);
         }
     }
 }
