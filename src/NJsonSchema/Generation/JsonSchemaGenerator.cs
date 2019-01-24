@@ -464,6 +464,11 @@ namespace NJsonSchema.Generation
             }
             else
                 schema.Item = JsonSchema4.CreateAnySchema();
+
+            if(schema.GetType() == typeof(JsonSchema4))
+            {
+                schemaResolver.AddSchema(type, false, schema);
+            }
         }
 
         private async Task GenerateEnum<TSchemaType>(
