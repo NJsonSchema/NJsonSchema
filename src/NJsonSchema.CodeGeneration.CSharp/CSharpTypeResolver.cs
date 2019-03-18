@@ -65,7 +65,7 @@ namespace NJsonSchema.CodeGeneration.CSharp
 
             // Primitive schemas (no new type)
 
-            if (schema.ActualTypeSchema.IsAnyType)
+            if (schema.ActualTypeSchema.IsAnyType && !IsDefinitionTypeSchema(schema.ActualTypeSchema))
                 return "object";
 
             var type = schema.ActualTypeSchema.Type;
@@ -113,6 +113,11 @@ namespace NJsonSchema.CodeGeneration.CSharp
             if ((schema.IsDictionary && !Settings.InlineNamedDictionaries) ||
                 (schema.IsArray && !Settings.InlineNamedArrays) ||
                 (schema.IsTuple && !Settings.InlineNamedTuples))
+            {
+                return true;
+            }
+
+            if (schema.IsAnyType && (Settings.ClassStyle == CSharpClassStyle.Inpc || Settings.ClassStyle == CSharpClassStyle.Prism))
             {
                 return true;
             }

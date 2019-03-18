@@ -1,0 +1,38 @@
+{
+    "definitions": {
+        "ClassWithoutProperties": {
+            "type": "object",
+            "description": "This is an empty class containing no properties"
+        },
+        "ClassWithProperties": {
+            "type": "object",
+            "description": "This is a class containing properties",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "This is the ID of ClassWithProperties"
+                }
+            }
+        }
+    },
+    "type": "object",
+    "description": "This is a class referencing the classes above",
+    "properties": {
+        "a": {
+            "$ref": "#/definitions/ClassWithoutProperties",
+            "description": "This is a property of type ClassWithoutProperties"
+        },
+        "b": {
+            "$ref": "#/definitions/ClassWithoutProperties",
+            "description": "This is a property of type ClassWithoutProperties"
+        },
+        "c": {
+            "$ref": "#/definitions/ClassWithProperties",
+            "description": "This is a property of type ClassWithProperties"
+        },
+        "d": {
+            "$ref": "#/definitions/ClassWithProperties",
+            "description": "This is a property of type ClassWithProperties"
+        }
+    }
+}
