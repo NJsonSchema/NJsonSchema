@@ -346,6 +346,10 @@ namespace NJsonSchema
         [JsonIgnore]
         public JsonSchema4 ParentSchema => Parent as JsonSchema4;
 
+        /// <summary>Gets or sets the KnownTypes Schemas</summary>
+        [JsonIgnore]
+        public ReadOnlyCollection<JsonSchema4> KnownTypesSchemas { get; set; }
+
         /// <summary>Gets the parent schema of this schema. </summary>
         [JsonIgnore]
         public virtual object Parent { get; set; }

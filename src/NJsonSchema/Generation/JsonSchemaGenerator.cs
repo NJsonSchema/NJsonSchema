@@ -274,23 +274,38 @@ namespace NJsonSchema.Generation
             var useDirectReference = Settings.AllowReferencesWithProperties ||
                 !JsonConvert.DeserializeObject<JObject>(JsonConvert.SerializeObject(referencingSchema)).Properties().Any(); // TODO: Improve performance
 
-            if (useDirectReference && referencingSchema.OneOf.Count == 0)
+            //TODO : use InheritanceMode ?
+            if (Settings.SchemaType == SchemaType.JsonSchema && referencedSchema.ActualSchema.KnownTypesSchemas?.Any() == true)
             {
-                referencingSchema.Reference = referencedSchema.ActualSchema;
-            }
-            else if (Settings.SchemaType != SchemaType.Swagger2)
-            {
-                referencingSchema.OneOf.Add(new JsonSchema4
+                foreach (var schema in referencedSchema.ActualSchema.KnownTypesSchemas)
                 {
-                    Reference = referencedSchema.ActualSchema
-                });
+                    referencingSchema.Type = JsonObjectType.Object;
+                    referencingSchema.OneOf.Add(new JsonSchema4
+                    {
+                        Reference = schema
+                    });
+                }
             }
             else
             {
-                referencingSchema.AllOf.Add(new JsonSchema4
+                if (useDirectReference && referencingSchema.OneOf.Count == 0)
                 {
-                    Reference = referencedSchema.ActualSchema
-                });
+                    referencingSchema.Reference = referencedSchema.ActualSchema;
+                }
+                else if (Settings.SchemaType != SchemaType.Swagger2)
+                {
+                    referencingSchema.OneOf.Add(new JsonSchema4
+                    {
+                        Reference = referencedSchema.ActualSchema
+                    });
+                }
+                else
+                {
+                    referencingSchema.AllOf.Add(new JsonSchema4
+                    {
+                        Reference = referencedSchema.ActualSchema
+                    });
+                }
             }
 
             return referencingSchema;
@@ -353,7 +368,7 @@ namespace NJsonSchema.Generation
 
             GenerateInheritanceDiscriminator(type, rootSchema, schema);
 
-            await GenerateKnownTypesAsync(type, schemaResolver).ConfigureAwait(false);
+            schema.KnownTypesSchemas = new System.Collections.ObjectModel.ReadOnlyCollection<JsonSchema4>(await GenerateKnownTypesAsync(type, schemaResolver).ConfigureAwait(false));
 
             if (Settings.GenerateXmlObjects)
             {
@@ -658,8 +673,10 @@ namespace NJsonSchema.Generation
             return null;
         }
 
-        private async Task GenerateKnownTypesAsync(Type type, JsonSchemaResolver schemaResolver)
+        private async Task<IList<JsonSchema4>> GenerateKnownTypesAsync(Type type, JsonSchemaResolver schemaResolver)
         {
+            var knownTypeSchemas = new List<JsonSchema4>();
+
             var attributes = type.GetTypeInfo()
                 .GetCustomAttributes(Settings.GetActualFlattenInheritanceHierarchy(type));
 
@@ -673,7 +690,7 @@ namespace NJsonSchema.Generation
                 foreach (dynamic attribute in knownTypeAttributes)
                 {
                     if (attribute.Type != null)
-                        await AddKnownTypeAsync(attribute.Type, schemaResolver).ConfigureAwait(false);
+                        knownTypeSchemas.Add(await AddKnownTypeAsync(attribute.Type, schemaResolver));
                     else if (attribute.MethodName != null)
                     {
                         var methodInfo = type.GetRuntimeMethod((string)attribute.MethodName, new Type[0]);
@@ -683,7 +700,7 @@ namespace NJsonSchema.Generation
                             if (knownTypes != null)
                             {
                                 foreach (var knownType in knownTypes)
-                                    await AddKnownTypeAsync(knownType, schemaResolver).ConfigureAwait(false);
+                                    knownTypeSchemas.Add(await AddKnownTypeAsync(knownType, schemaResolver));
                             }
                         }
                     }
@@ -693,25 +710,29 @@ namespace NJsonSchema.Generation
             }
 
             foreach (var jsonConverterAttribute in attributes
-                .Where(a => a.GetType().IsAssignableTo("JsonInheritanceAttribute", TypeNameStyle.Name)))
+               .Where(a => a.GetType().IsAssignableTo("JsonInheritanceAttribute", TypeNameStyle.Name)))
             {
                 var knownType = ReflectionExtensions.TryGetPropertyValue<Type>(
                     jsonConverterAttribute, "Type", null);
 
                 if (knownType != null)
                 {
-                    await AddKnownTypeAsync(knownType, schemaResolver).ConfigureAwait(false);
+                    knownTypeSchemas.Add(await AddKnownTypeAsync(type, schemaResolver));
                 }
             }
+            return knownTypeSchemas;
         }
 
-        private async Task AddKnownTypeAsync(Type type, JsonSchemaResolver schemaResolver)
+
+        private async Task<JsonSchema4> AddKnownTypeAsync(Type type, JsonSchemaResolver schemaResolver)
         {
             var typeDescription = Settings.ReflectionService.GetDescription(type, null, Settings);
             var isIntegerEnum = typeDescription.Type == JsonObjectType.Integer;
 
-            if (!schemaResolver.HasSchema(type, isIntegerEnum))
-                await GenerateAsync(type, schemaResolver).ConfigureAwait(false);
+            if (schemaResolver.HasSchema(type, isIntegerEnum))
+                return schemaResolver.GetSchema(type, isIntegerEnum);
+            else
+                return await GenerateAsync(type, schemaResolver).ConfigureAwait(false);
         }
 
         private async Task<JsonSchema4> GenerateInheritanceAsync(Type type, JsonSchema4 schema, JsonSchemaResolver schemaResolver)
