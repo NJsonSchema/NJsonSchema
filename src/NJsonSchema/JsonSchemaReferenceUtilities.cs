@@ -105,13 +105,17 @@ namespace NJsonSchema
             {
                 if (reference.ReferencePath != null && reference.Reference == null)
                 {
+                    var rootObject = reference.FindParentDocument();
+                    if (rootObject == reference)
+                        rootObject = _rootObject;
+
                     if (_replaceRefsRound)
                     {
                         if (path.EndsWith("/definitions/" + typeNameHint) || path.EndsWith("/schemas/" + typeNameHint))
                         {
                             // inline $refs in "definitions"
                             return await _referenceResolver
-                                .ResolveReferenceWithoutAppendAsync(_rootObject, reference.ReferencePath)
+                                .ResolveReferenceWithoutAppendAsync(rootObject, reference.ReferencePath)
                                 .ConfigureAwait(false);
                         }
                     }
@@ -119,7 +123,7 @@ namespace NJsonSchema
                     {
                         // load $refs and add them to "definitions"
                         reference.Reference = await _referenceResolver
-                            .ResolveReferenceAsync(_rootObject, reference.ReferencePath)
+                            .ResolveReferenceAsync(rootObject, reference.ReferencePath)
                             .ConfigureAwait(false);
                     }
                 }

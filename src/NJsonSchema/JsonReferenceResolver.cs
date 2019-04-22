@@ -82,7 +82,8 @@ namespace NJsonSchema
             var allSegments = jsonPath.Split('/').Skip(1).ToList();
             var schema = ResolveDocumentReference(rootObject, allSegments, new HashSet<object>());
             if (schema == null)
-                throw new InvalidOperationException("Could not resolve the path '" + jsonPath + "'.");
+                throw new InvalidOperationException("Could not resolve the path '" + jsonPath + "' from schema " +
+                                                    "with document path '" + (rootObject as IDocumentPathProvider)?.DocumentPath + "'.");
             return schema;
         }
 
