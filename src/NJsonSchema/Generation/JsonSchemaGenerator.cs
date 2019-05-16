@@ -607,7 +607,7 @@ namespace NJsonSchema.Generation
                             (propertyInfo.GetGetMethod()?.IsAbstract != true && propertyInfo.GetSetMethod()?.IsAbstract != true))
 #endif
                         {
-                            await LoadPropertyOrFieldAsync(property, info, type, schema, schemaResolver).ConfigureAwait(false);
+                            await LoadPropertyOrFieldAsync(objectContract, property, info, type, schema, schemaResolver).ConfigureAwait(false);
                         }
                     }
                 }
@@ -640,7 +640,7 @@ namespace NJsonSchema.Generation
                         property.PropertyName = info.Name;
                     }
 
-                    await LoadPropertyOrFieldAsync(property, info, type, schema, schemaResolver).ConfigureAwait(false);
+                    await LoadPropertyOrFieldAsync(null, property, info, type, schema, schemaResolver).ConfigureAwait(false);
                 }
             }
         }
@@ -911,7 +911,7 @@ namespace NJsonSchema.Generation
             }
         }
 
-        private async Task LoadPropertyOrFieldAsync(Newtonsoft.Json.Serialization.JsonProperty property, MemberInfo propertyInfo, Type parentType, JsonSchema4 parentSchema, JsonSchemaResolver schemaResolver)
+        private async Task LoadPropertyOrFieldAsync(JsonObjectContract objectContract, Newtonsoft.Json.Serialization.JsonProperty property, MemberInfo propertyInfo, Type parentType, JsonSchema4 parentSchema, JsonSchemaResolver schemaResolver)
         {
             var propertyType = property.PropertyType;
             var propertyAttributes = property.AttributeProvider.GetAttributes(true).ToArray();
@@ -930,8 +930,14 @@ namespace NJsonSchema.Generation
                     throw new InvalidOperationException("The JSON property '" + propertyName + "' is defined multiple times on type '" + parentType.FullName + "'.");
 
                 var requiredAttribute = propertyAttributes.TryGetIfAssignableTo("System.ComponentModel.DataAnnotations.RequiredAttribute");
+                
+                var propertyRequired = 
+                    objectContract?.ItemRequired != null && 
+                    !propertyAttributes.OfType<JsonPropertyAttribute>()
+                        .Any(/*a => a.TryGetPropertyValue<object>("_required", null) != null*/) ? 
+                        objectContract.ItemRequired : property.Required;
 
-                var hasJsonNetAttributeRequired = property.Required == Required.Always || property.Required == Required.AllowNull;
+                var hasJsonNetAttributeRequired = propertyRequired == Required.Always || propertyRequired == Required.AllowNull;
                 var isDataContractMemberRequired = GetDataMemberAttribute(parentType, propertyAttributes)?.IsRequired == true;
 
                 var hasRequiredAttribute = requiredAttribute != null;
@@ -941,7 +947,7 @@ namespace NJsonSchema.Generation
                 var isNullable = propertyTypeDescription.IsNullable &&
                     hasRequiredAttribute == false &&
                     (bool)isDataContractMemberRequired == false &&
-                    (property.Required == Required.Default || property.Required == Required.AllowNull);
+                    (propertyRequired == Required.Default || propertyRequired == Required.AllowNull);
 
                 var jsonProperty = await GenerateWithReferenceAndNullabilityAsync<JsonProperty>(
                     propertyType, propertyAttributes, isNullable, schemaResolver, async (p, s) =>
