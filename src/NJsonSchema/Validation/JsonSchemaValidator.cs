@@ -37,12 +37,16 @@ namespace NJsonSchema.Validation
         };
 
         private readonly IDictionary<string, IFormatValidator> _formatValidatorsMap;
+        
+        private readonly SchemaType _schemaType;
 
         /// <summary>
         /// Initializes JsonSchemaValidator
         /// </summary>
-        public JsonSchemaValidator()
+        /// <param name="schemaType">The JSON schema type.</param>
+        public JsonSchemaValidator(SchemaType schemaType = SchemaType.JsonSchema)
         {
+            _schemaType = schemaType;
             _formatValidatorsMap = _formatValidators.ToDictionary(v => v.Format, v => v);
         }
 
@@ -232,6 +236,14 @@ namespace NJsonSchema.Validation
                     }
                 }
             }
+            else if (type.HasFlag(JsonObjectType.String) && token.Type == JTokenType.Null)
+            {
+                if (!schema.IsNullable(_schemaType))
+                {
+                    errors.Add(new ValidationError(ValidationErrorKind.StringExpected, propertyName, propertyPath, token,
+                        schema));
+                }
+            }
             else if (type.HasFlag(JsonObjectType.String))
             {
                 errors.Add(new ValidationError(ValidationErrorKind.StringExpected, propertyName, propertyPath, token, schema));
@@ -240,6 +252,16 @@ namespace NJsonSchema.Validation
 
         private void ValidateNumber(JToken token, JsonSchema4 schema, JsonObjectType type, string propertyName, string propertyPath, List<ValidationError> errors)
         {
+            if (type.HasFlag(JsonObjectType.Number) && token.Type == JTokenType.Null)
+            {
+                if (!schema.IsNullable(_schemaType))
+                {
+                    errors.Add(new ValidationError(ValidationErrorKind.NumberExpected, propertyName, propertyPath, token,
+                        schema));
+                }
+                return;
+            }
+            
             if (type.HasFlag(JsonObjectType.Number) && token.Type != JTokenType.Float && token.Type != JTokenType.Integer)
             {
                 errors.Add(new ValidationError(ValidationErrorKind.NumberExpected, propertyName, propertyPath, token, schema));
@@ -290,6 +312,16 @@ namespace NJsonSchema.Validation
 
         private void ValidateInteger(JToken token, JsonSchema4 schema, JsonObjectType type, string propertyName, string propertyPath, List<ValidationError> errors)
         {
+            if (type.HasFlag(JsonObjectType.Integer) && token.Type == JTokenType.Null)
+            {
+                if (!schema.IsNullable(_schemaType))
+                {
+                    errors.Add(new ValidationError(ValidationErrorKind.IntegerExpected, propertyName, propertyPath, token,
+                        schema));
+                }
+                return;
+            }
+            
             if (type.HasFlag(JsonObjectType.Integer) && token.Type != JTokenType.Integer)
             {
                 errors.Add(new ValidationError(ValidationErrorKind.IntegerExpected, propertyName, propertyPath, token, schema));
@@ -298,6 +330,16 @@ namespace NJsonSchema.Validation
 
         private void ValidateBoolean(JToken token, JsonSchema4 schema, JsonObjectType type, string propertyName, string propertyPath, List<ValidationError> errors)
         {
+            if (type.HasFlag(JsonObjectType.Boolean) && token.Type == JTokenType.Null)
+            {
+                if (!schema.IsNullable(_schemaType))
+                {
+                    errors.Add(new ValidationError(ValidationErrorKind.BooleanExpected, propertyName, propertyPath, token,
+                        schema));
+                }
+                return;
+            }
+            
             if (type.HasFlag(JsonObjectType.Boolean) && token.Type != JTokenType.Boolean)
             {
                 errors.Add(new ValidationError(ValidationErrorKind.BooleanExpected, propertyName, propertyPath, token, schema));
@@ -306,6 +348,16 @@ namespace NJsonSchema.Validation
 
         private void ValidateObject(JToken token, JsonSchema4 schema, JsonObjectType type, string propertyName, string propertyPath, List<ValidationError> errors)
         {
+            if (type.HasFlag(JsonObjectType.Object) && token.Type == JTokenType.Null)
+            {
+                if (!schema.IsNullable(_schemaType))
+                {
+                    errors.Add(new ValidationError(ValidationErrorKind.ObjectExpected, propertyName, propertyPath, token,
+                        schema));
+                }
+                return;
+            }
+            
             if (type.HasFlag(JsonObjectType.Object) && !(token is JObject))
             {
                 errors.Add(new ValidationError(ValidationErrorKind.ObjectExpected, propertyName, propertyPath, token, schema));

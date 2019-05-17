@@ -791,20 +791,22 @@ namespace NJsonSchema
 
         /// <summary>Validates the given JSON data against this schema.</summary>
         /// <param name="jsonData">The JSON data to validate. </param>
+        /// <param name="schemaType">The JSON schema type</param>
         /// <exception cref="JsonReaderException">Could not deserialize the JSON data.</exception>
         /// <returns>The collection of validation errors. </returns>
-        public ICollection<ValidationError> Validate(string jsonData)
+        public ICollection<ValidationError> Validate(string jsonData, SchemaType schemaType = SchemaType.JsonSchema)
         {
-            var validator = new JsonSchemaValidator();
+            var validator = new JsonSchemaValidator(schemaType);
             return validator.Validate(jsonData, ActualSchema);
         }
 
         /// <summary>Validates the given JSON token against this schema.</summary>
         /// <param name="token">The token to validate. </param>
+        /// <param name="schemaType">The JSON schema type</param>
         /// <returns>The collection of validation errors. </returns>
-        public ICollection<ValidationError> Validate(JToken token)
+        public ICollection<ValidationError> Validate(JToken token, SchemaType schemaType = SchemaType.JsonSchema)
         {
-            var validator = new JsonSchemaValidator();
+            var validator = new JsonSchemaValidator(schemaType);
             return validator.Validate(token, ActualSchema);
         }
 
