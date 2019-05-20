@@ -132,5 +132,47 @@ namespace NJsonSchema.CodeGeneration.Tests.CSharp
             //// Assert
             Assert.Contains("public Dog Dog { get; set; }", code);
         }
+
+        [Fact]
+        public async Task When_schema_with_inheritance_is_any_then_no_exception_is_thrown()
+        {
+            //// Arrange
+            var json = @"{
+    ""type"": ""object"",
+    ""properties"": {
+        ""field"": {
+            ""$ref"": ""#/definitions/ChildDataType""
+        }
+    },
+    ""definitions"": {
+        ""ParentDataType"": {
+            ""title"": ""ParentDataType"",
+            ""description"": """",
+            ""type"": ""object""
+        },
+        ""ChildDataType"": {
+            ""title"": ""ChildDataType"",
+            ""description"": """",
+            ""allOf"": [
+                {
+                    ""$ref"": ""#/definitions/ParentDataType""
+                },
+                {
+                    ""type"": ""object""
+                }
+            ]
+        }
+    }
+}";
+            var schema = await JsonSchema4.FromJsonAsync(json);
+            var generator = new CSharpGenerator(schema, new CSharpGeneratorSettings { ClassStyle = CSharpClassStyle.Poco });
+
+            //// Act
+            var code = generator.GenerateFile();
+
+            //// Assert
+            Assert.Contains("public ChildDataType Field { get; set; }", code);
+            Assert.Contains("ChildDataType : ParentDataType", code);
+        }
     }
 }

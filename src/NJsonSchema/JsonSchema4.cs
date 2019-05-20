@@ -219,15 +219,15 @@ namespace NJsonSchema
                     return null;
 
                 if (AllOf.Count == 1)
-                    return AllOf.First().ActualSchema;
+                    return AllOf.First();
 
                 if (AllOf.Any(s => s.HasReference && !s.ActualSchema.IsAnyType))
-                    return AllOf.First(s => s.HasReference && !s.ActualSchema.IsAnyType).ActualSchema;
+                    return AllOf.First(s => s.HasReference && !s.ActualSchema.IsAnyType);
 
                 if (AllOf.Any(s => s.Type.HasFlag(JsonObjectType.Object) && !s.ActualSchema.IsAnyType))
-                    return AllOf.First(s => s.Type.HasFlag(JsonObjectType.Object) && !s.ActualSchema.IsAnyType).ActualSchema;
+                    return AllOf.First(s => s.Type.HasFlag(JsonObjectType.Object) && !s.ActualSchema.IsAnyType);
 
-                return AllOf.First(s => !s.ActualSchema.IsAnyType)?.ActualSchema;
+                return AllOf.First(s => !(s.ActualTypeSchema.IsAnyType && !s.HasReference));
             }
         }
 
