@@ -17,6 +17,7 @@ namespace NJsonSchema.CodeGeneration.CSharp.Models
     {
         private readonly CSharpTypeResolver _resolver;
         private readonly JsonSchema _schema;
+        private readonly object _rootObject;
         private readonly CSharpGeneratorSettings _settings;
 
         /// <summary>Initializes a new instance of the <see cref="ClassTemplateModel"/> class.</summary>
@@ -31,6 +32,7 @@ namespace NJsonSchema.CodeGeneration.CSharp.Models
         {
             _resolver = resolver;
             _schema = schema;
+            _rootObject = rootObject;
             _settings = settings;
 
             ClassName = typeName;
@@ -39,9 +41,10 @@ namespace NJsonSchema.CodeGeneration.CSharp.Models
                 .Select(property => new PropertyModel(this, property, _resolver, _settings))
                 .ToArray();
 
-            if (schema.InheritedSchema != null)
+            var inheritedSchema = schema.GetInheritedSchema(rootObject);
+            if (inheritedSchema != null)
             {
-                BaseClass = new ClassTemplateModel(BaseClassName, settings, resolver, schema.InheritedSchema, rootObject);
+                BaseClass = new ClassTemplateModel(BaseClassName, settings, resolver, inheritedSchema, rootObject);
                 AllProperties = Properties.Concat(BaseClass.AllProperties).ToArray();
             }
             else
@@ -117,10 +120,10 @@ namespace NJsonSchema.CodeGeneration.CSharp.Models
             .ToArray();
 
         /// <summary>Gets a value indicating whether the class has a parent class.</summary>
-        public bool HasInheritance => _schema.InheritedTypeSchema != null;
+        public bool HasInheritance => _schema.GetInheritedSchema(_rootObject) != null;
 
         /// <summary>Gets the base class name.</summary>
-        public string BaseClassName => HasInheritance ? _resolver.Resolve(_schema.InheritedTypeSchema, false, string.Empty, false)
+        public string BaseClassName => HasInheritance ? _resolver.Resolve(_schema.GetInheritedSchema(_rootObject), false, string.Empty, false)
                 .Replace(_settings.ArrayType + "<", _settings.ArrayBaseType + "<")
                 .Replace(_settings.DictionaryType + "<", _settings.DictionaryBaseType + "<") : null;
 
@@ -129,7 +132,7 @@ namespace NJsonSchema.CodeGeneration.CSharp.Models
 
         /// <summary>Gets a value indicating whether the class inherits from exception.</summary>
         public bool InheritsExceptionSchema => _resolver.ExceptionSchema != null &&
-                                               _schema?.InheritsSchema(_resolver.ExceptionSchema) == true;
+                                               _schema?.InheritsSchema(_resolver.ExceptionSchema, _rootObject) == true;
 
         /// <summary>Gets a value indicating whether to use the DateFormatConverter.</summary>
         public bool UseDateFormatConverter => _settings.DateType.StartsWith("System.Date");

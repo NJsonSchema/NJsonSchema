@@ -20,7 +20,7 @@ namespace NJsonSchema.CodeGeneration
         /// <returns></returns>
         public static IDictionary<JsonSchema, string> GetDerivedSchemas(this JsonSchema schema, object rootObject)
         {
-            var visitor = new DerivedSchemaVisitor(schema);
+            var visitor = new DerivedSchemaVisitor(schema, rootObject);
             visitor.Visit(rootObject);
             return visitor.DerivedSchemas;
         }
@@ -28,17 +28,19 @@ namespace NJsonSchema.CodeGeneration
         private class DerivedSchemaVisitor : JsonSchemaVisitorBase
         {
             private readonly JsonSchema _baseSchema;
+            private readonly object _rootObject;
 
             public Dictionary<JsonSchema, string> DerivedSchemas { get; } = new Dictionary<JsonSchema, string>();
 
-            public DerivedSchemaVisitor(JsonSchema baseSchema)
+            public DerivedSchemaVisitor(JsonSchema baseSchema, object rootObject)
             {
                 _baseSchema = baseSchema;
+                _rootObject = rootObject;
             }
 
             protected override JsonSchema VisitSchema(JsonSchema schema, string path, string typeNameHint)
             {
-                if (schema.Inherits(_baseSchema) && _baseSchema != schema)
+                if (schema.Inherits(_baseSchema, _rootObject) && _baseSchema != schema)
                 {
                     DerivedSchemas.Add(schema, typeNameHint);
                 }

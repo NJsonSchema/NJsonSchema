@@ -29,7 +29,7 @@ namespace NJsonSchema.CodeGeneration.CSharp
         /// <param name="rootObject">The root object to search for all JSON Schemas.</param>
         /// <param name="settings">The generator settings.</param>
         public CSharpGenerator(object rootObject, CSharpGeneratorSettings settings)
-            : this(rootObject, settings, new CSharpTypeResolver(settings))
+            : this(rootObject, settings, new CSharpTypeResolver(rootObject, settings))
         {
         }
 

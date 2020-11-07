@@ -19,6 +19,7 @@ using Newtonsoft.Json.Linq;
 using NJsonSchema.Collections;
 using NJsonSchema.Generation;
 using NJsonSchema.Infrastructure;
+using NJsonSchema.References;
 using NJsonSchema.Validation;
 using NJsonSchema.Validation.FormatValidators;
 
@@ -218,87 +219,6 @@ namespace NJsonSchema
             }
         }
 
-        /// <summary>Gets the inherited/parent schema (most probable base schema in allOf).</summary>
-        /// <remarks>Used for code generation.</remarks>
-        [JsonIgnore]
-        public JsonSchema InheritedSchema
-        {
-            get
-            {
-                if (AllOf == null || AllOf.Count == 0 || HasReference)
-                {
-                    return null;
-                }
-
-                if (AllOf.Count == 1)
-                {
-                    return AllOf.First().ActualSchema;
-                }
-
-                if (AllOf.Any(s => s.HasReference))
-                {
-                    return AllOf.First(s => s.HasReference).ActualSchema;
-                }
-
-                if (AllOf.Any(s => s.Type.HasFlag(JsonObjectType.Object)))
-                {
-                    return AllOf.First(s => s.Type.HasFlag(JsonObjectType.Object)).ActualSchema;
-                }
-
-                return AllOf.FirstOrDefault()?.ActualSchema;
-            }
-        }
-
-        /// <summary>Gets the inherited/parent schema which may also be inlined 
-        /// (the schema itself if it is a dictionary or array, otherwise <see cref="InheritedSchema"/>).</summary>
-        /// <remarks>Used for code generation.</remarks>
-        [JsonIgnore]
-        public JsonSchema InheritedTypeSchema
-        {
-            get
-            {
-                if (ActualTypeSchema.IsDictionary || ActualTypeSchema.IsArray || ActualTypeSchema.IsTuple)
-                {
-                    return ActualTypeSchema;
-                }
-
-                return InheritedSchema;
-            }
-        }
-
-        /// <summary>Gets the list of all inherited/parent schemas.</summary>
-        /// <remarks>Used for code generation.</remarks>
-        [JsonIgnore]
-#if !LEGACY
-        public IReadOnlyCollection<JsonSchema> AllInheritedSchemas
-#else
-        public ICollection<JsonSchema> AllInheritedSchemas
-#endif
-        {
-            get
-            {
-                var inheritedSchema = this.InheritedSchema != null ?
-                    new List<JsonSchema> { this.InheritedSchema } :
-                    new List<JsonSchema>();
-
-                return inheritedSchema.Concat(inheritedSchema.SelectMany(s => s.AllInheritedSchemas)).ToList();
-            }
-        }
-
-        /// <summary>Determines whether the given schema is the parent schema of this schema (i.e. super/base class).</summary>
-        /// <param name="schema">The possible subtype schema.</param>
-        /// <returns>true or false</returns>
-        public bool Inherits(JsonSchema schema)
-        {
-            schema = schema.ActualSchema;
-            return InheritedSchema?.ActualSchema == schema || InheritedSchema?.Inherits(schema) == true;
-        }
-
-        /// <summary>Gets the discriminator or discriminator of an inherited schema (or null).</summary>
-        [JsonIgnore]
-        public OpenApiDiscriminator ResponsibleDiscriminatorObject =>
-            ActualDiscriminatorObject ?? InheritedSchema?.ActualSchema.ResponsibleDiscriminatorObject;
-
         /// <summary>Gets all properties of this schema (i.e. all direct properties and properties from the schemas in allOf which do not have a type).</summary>
         /// <remarks>Used for code generation.</remarks>
         /// <exception cref="InvalidOperationException" accessor="get">Some properties are defined multiple times.</exception>
@@ -312,7 +232,7 @@ namespace NJsonSchema
             get
             {
                 var properties = Properties
-                    .Union(AllOf.Where(s => s.ActualSchema != InheritedSchema)
+                    .Union(AllOf.Where(s => s.ActualSchema != this.GetInheritedSchema(((IJsonReference)this).PossibleRoot))
                     .SelectMany(s => s.ActualSchema.ActualProperties))
                     .ToList();
 
@@ -847,16 +767,6 @@ namespace NJsonSchema
         //    SchemaVersion = oldSchema;
         //    return json;
         //}
-
-        /// <summary>Gets a value indicating whether this schema inherits from the given parent schema.</summary>
-        /// <param name="parentSchema">The parent schema.</param>
-        /// <returns>true or false.</returns>
-        public bool InheritsSchema(JsonSchema parentSchema)
-        {
-            return parentSchema != null && ActualSchema
-                .AllInheritedSchemas.Concat(new List<JsonSchema> { this })
-                .Any(s => s.ActualSchema == parentSchema.ActualSchema) == true;
-        }
 
         /// <summary>Validates the given JSON data against this schema.</summary>
         /// <param name="jsonData">The JSON data to validate. </param>

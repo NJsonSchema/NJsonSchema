@@ -130,7 +130,9 @@ namespace NJsonSchema
 
         /// <summary>Gets the parent object of this object. </summary>
         [JsonIgnore]
-        object IJsonReference.PossibleRoot => Parent;
+        object IJsonReference.PossibleRoot => Parent != this && Parent is IJsonReference reference ?
+            reference.PossibleRoot :
+            Parent; // TODO: Avoid cycles
 
         /// <summary>Gets or sets the referenced object.</summary>
         [JsonIgnore]

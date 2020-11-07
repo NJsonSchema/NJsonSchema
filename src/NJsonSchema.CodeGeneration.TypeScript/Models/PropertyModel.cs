@@ -20,22 +20,27 @@ namespace NJsonSchema.CodeGeneration.TypeScript.Models
         private readonly string _parentTypeName;
         private readonly TypeScriptGeneratorSettings _settings;
         private readonly JsonSchemaProperty _property;
+        private readonly object _rootObject;
         private readonly TypeScriptTypeResolver _resolver;
 
         /// <summary>Initializes a new instance of the <see cref="PropertyModel"/> class.</summary>
         /// <param name="classTemplateModel">The class template model.</param>
         /// <param name="property">The property.</param>
+        /// <param name="rootObject">The root object.</param>
         /// <param name="parentTypeName">Name of the parent type.</param>
         /// <param name="typeResolver">The resolver.</param>
         /// <param name="settings">The settings.</param>
         public PropertyModel(
             ClassTemplateModel classTemplateModel,
-            JsonSchemaProperty property, string parentTypeName,
+            JsonSchemaProperty property,
+            object rootObject,
+            string parentTypeName,
             TypeScriptTypeResolver typeResolver,
             TypeScriptGeneratorSettings settings)
             : base(property, classTemplateModel, typeResolver, settings)
         {
             _property = property;
+            _rootObject = rootObject;
             _resolver = typeResolver;
             _parentTypeName = parentTypeName;
             _settings = settings;
@@ -70,17 +75,17 @@ namespace NJsonSchema.CodeGeneration.TypeScript.Models
 
                 if (IsArray)
                 {
-                    return _resolver.SupportsConstructorConversion(_property.ActualTypeSchema?.Item) &&
+                    return _resolver.SupportsConstructorConversion(_property.ActualTypeSchema?.Item, _rootObject) &&
                         _property.ActualTypeSchema?.Item.ActualSchema.Type.HasFlag(JsonObjectType.Object) == true;
                 }
 
                 if (IsDictionary)
                 {
-                    return _resolver.SupportsConstructorConversion(_property.ActualTypeSchema?.AdditionalPropertiesSchema) &&
+                    return _resolver.SupportsConstructorConversion(_property.ActualTypeSchema?.AdditionalPropertiesSchema, _rootObject) &&
                         _property.ActualTypeSchema?.AdditionalPropertiesSchema.ActualSchema.Type.HasFlag(JsonObjectType.Object) == true;
                 }
 
-                return _resolver.SupportsConstructorConversion(_property) &&
+                return _resolver.SupportsConstructorConversion(_property.ActualTypeSchema, _rootObject) && 
                     !_property.ActualTypeSchema.IsTuple;
             }
         }

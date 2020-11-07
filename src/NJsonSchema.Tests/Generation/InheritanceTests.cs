@@ -43,7 +43,7 @@ namespace NJsonSchema.Tests.Generation
             var schema = await JsonSchema.FromJsonAsync(json);
 
             //// Assert
-            Assert.NotNull(schema.InheritedSchema);
+            Assert.NotNull(schema.GetInheritedSchema(schema));
             Assert.Equal(2, schema.ActualProperties.Count);
             Assert.True(schema.ActualProperties.ContainsKey("prop1"));
             Assert.True(schema.ActualProperties.ContainsKey("prop2"));
@@ -75,7 +75,7 @@ namespace NJsonSchema.Tests.Generation
             var schema = await JsonSchema.FromJsonAsync(json);
 
             //// Assert
-            Assert.NotNull(schema.InheritedSchema);
+            Assert.NotNull(schema.GetInheritedSchema(schema));
             Assert.Equal(1, schema.ActualProperties.Count);
             Assert.True(schema.ActualProperties.ContainsKey("prop1"));
         }
@@ -367,7 +367,7 @@ namespace NJsonSchema.Tests.Generation
             Assert.Equal(2, bar.AllOf.Count);
 
             Assert.Equal(bar.AllOf.Last(), bar.ActualTypeSchema);
-            Assert.Equal(bar.AllOf.First(), bar.InheritedSchema);
+            Assert.Equal(bar.AllOf.First(), bar.GetInheritedSchema(schema));
 
             Assert.True(bar.AllOf.First().IsDictionary); // base class (dictionary)
             Assert.True(bar.AllOf.Last().ActualProperties.Any()); // actual class

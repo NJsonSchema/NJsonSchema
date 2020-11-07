@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
+using NJsonSchema.CodeGeneration.Tests;
 using NJsonSchema.Benchmark;
 
 namespace NJsonSchema.Demo
@@ -13,6 +14,8 @@ namespace NJsonSchema.Demo
     {
         static void Main(string[] args)
         {
+            RunAsync().GetAwaiter().GetResult();
+
             Console.BufferHeight = 2000;
 
             var passes = 0;
@@ -70,6 +73,12 @@ namespace NJsonSchema.Demo
             //schema = await JsonSchema4.FromJsonAsync(schemaData);
 
             //Console.ReadLine();
+        }
+
+        private static async Task RunAsync()
+        {
+            var x = new InheritanceSerializationTests();
+            await x.When_schema_contains_discriminator_and_inheritance_hierarchy_then_TypeScript_is_correctly_generated();
         }
 
         private static void RunTest(string file, JObject suite, JToken value, bool expectedResult, ref int fails, ref int passes, ref int exceptions)

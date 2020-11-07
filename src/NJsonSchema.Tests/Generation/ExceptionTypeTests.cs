@@ -21,7 +21,7 @@ namespace NJsonSchema.Tests.Generation
             var json = schema.ToJson();
 
             //// Act
-            var exceptionSchema = schema.InheritedSchema.ActualSchema;
+            var exceptionSchema = schema.GetInheritedSchema(schema).ActualSchema;
 
             //// Assert
             Assert.True(schema.ActualProperties.ContainsKey("foo"));

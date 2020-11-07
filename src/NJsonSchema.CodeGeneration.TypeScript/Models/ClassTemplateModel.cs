@@ -17,6 +17,7 @@ namespace NJsonSchema.CodeGeneration.TypeScript.Models
     {
         private readonly TypeScriptGeneratorSettings _settings;
         private readonly JsonSchema _schema;
+        private readonly object _rootObject;
         private readonly TypeScriptTypeResolver _resolver;
         private readonly string _discriminatorName;
 
@@ -34,14 +35,15 @@ namespace NJsonSchema.CodeGeneration.TypeScript.Models
         {
             _settings = settings;
             _schema = schema;
+            _rootObject = rootObject;
             _resolver = resolver;
             _discriminatorName = discriminatorName;
 
             ClassName = typeName;
             Properties = _schema.ActualProperties.Values
-                .Where(v => settings.TypeStyle == TypeScriptTypeStyle.Interface || 
+                .Where(v => settings.TypeStyle == TypeScriptTypeStyle.Interface ||
                             v.IsInheritanceDiscriminator == false)
-                .Select(property => new PropertyModel(this, property, ClassName, _resolver, _settings))
+                .Select(property => new PropertyModel(this, property, _rootObject, ClassName, _resolver, _settings))
                 .ToList();
         }
 
@@ -50,17 +52,17 @@ namespace NJsonSchema.CodeGeneration.TypeScript.Models
 
         /// <summary>Gets the name for the discriminator check.</summary>
         public string DiscriminatorName => HasBaseDiscriminator ?
-            (_schema.ResponsibleDiscriminatorObject.Mapping.FirstOrDefault(m => m.Value.ActualTypeSchema == _schema.ActualTypeSchema).Key ?? _discriminatorName) :
+            (_schema.ActualDiscriminatorObject.Mapping.FirstOrDefault(m => m.Value.ActualTypeSchema == _schema.ActualTypeSchema).Key ?? _discriminatorName) :
             _discriminatorName;
 
         /// <summary>Gets a value indicating whether the class has a discriminator property.</summary>
         public bool HasDiscriminator => !string.IsNullOrEmpty(_schema.ActualDiscriminator);
 
         /// <summary>Gets a value indicating whether the class or an inherited class has a discriminator property.</summary>
-        public bool HasBaseDiscriminator => _schema.ResponsibleDiscriminatorObject != null;
+        public bool HasBaseDiscriminator => _schema.GetBaseDiscriminator(_rootObject) != null;
 
         /// <summary>Gets the class discriminator property name (may be defined in a inherited class).</summary>
-        public string BaseDiscriminator => _schema.ResponsibleDiscriminatorObject?.PropertyName;
+        public string BaseDiscriminator => _schema.GetBaseDiscriminator(_rootObject)?.PropertyName;
 
         /// <summary>Gets a value indicating whether the class has description.</summary>
         public bool HasDescription => !(_schema is JsonSchemaProperty) &&
@@ -111,7 +113,7 @@ namespace NJsonSchema.CodeGeneration.TypeScript.Models
 
         /// <summary>Gets a value indicating whether the class inherits from dictionary.</summary>
         public bool HasIndexerProperty => _schema.IsDictionary ||
-                                          _schema.InheritedSchema?.IsDictionary == true;
+                                          _schema.GetInheritedSchema(_rootObject)?.IsDictionary == true;
 
         /// <summary>Gets the type of the indexer property value.</summary>
         public string IndexerPropertyValueType
@@ -147,6 +149,6 @@ namespace NJsonSchema.CodeGeneration.TypeScript.Models
         public bool ExportTypes => _settings.ExportTypes;
 
         /// <summary>Gets the inherited schema.</summary>
-        private JsonSchema InheritedSchema => _schema.InheritedSchema?.ActualSchema;
+        private JsonSchema InheritedSchema => _schema.GetInheritedSchema(_rootObject)?.ActualSchema;
     }
 }

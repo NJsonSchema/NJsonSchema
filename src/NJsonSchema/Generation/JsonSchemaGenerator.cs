@@ -1142,7 +1142,8 @@ namespace NJsonSchema.Generation
                 }
                 else
                 {
-                    var baseDiscriminator = schema.ResponsibleDiscriminatorObject ?? schema.ActualTypeSchema.ResponsibleDiscriminatorObject;
+                    //var baseDiscriminator = schema.GetBaseDiscriminator(schema.Root?); // TODO: Use this somehow here?
+                    var baseDiscriminator = schema.DiscriminatorObject;
                     baseDiscriminator?.AddMapping(type, schema);
                 }
             }

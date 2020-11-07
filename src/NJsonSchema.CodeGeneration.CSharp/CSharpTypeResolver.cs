@@ -14,19 +14,24 @@ namespace NJsonSchema.CodeGeneration.CSharp
     /// <summary>Manages the generated types and converts JSON types to CSharp types. </summary>
     public class CSharpTypeResolver : TypeResolverBase
     {
+        private readonly object _rootObject;
+
         /// <summary>Initializes a new instance of the <see cref="CSharpTypeResolver"/> class.</summary>
+        /// <param name="rootObject">The root object.</param>
         /// <param name="settings">The generator settings.</param>
-        public CSharpTypeResolver(CSharpGeneratorSettings settings)
-            : this(settings, null)
+        public CSharpTypeResolver(object rootObject, CSharpGeneratorSettings settings)
+            : this(rootObject, settings, null)
         {
         }
 
         /// <summary>Initializes a new instance of the <see cref="CSharpTypeResolver"/> class.</summary>
+        /// <param name="rootObject">The root object.</param>
         /// <param name="settings">The generator settings.</param>
         /// <param name="exceptionSchema">The exception type schema.</param>
-        public CSharpTypeResolver(CSharpGeneratorSettings settings, JsonSchema exceptionSchema)
+        public CSharpTypeResolver(object rootObject, CSharpGeneratorSettings settings, JsonSchema exceptionSchema)
             : base(settings)
         {
+            _rootObject = rootObject;
             Settings = settings;
             ExceptionSchema = exceptionSchema;
         }
@@ -76,7 +81,7 @@ namespace NJsonSchema.CodeGeneration.CSharp
             }
 
             if (schema.ActualTypeSchema.IsAnyType &&
-                schema.InheritedSchema == null && // not in inheritance hierarchy
+                schema.GetInheritedSchema(_rootObject) == null && // not in inheritance hierarchy
                 schema.AllOf.Count == 0 &&
                 !Types.Keys.Contains(schema) &&
                 !schema.HasReference)

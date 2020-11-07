@@ -31,7 +31,7 @@ namespace NJsonSchema.CodeGeneration.TypeScript
         /// <param name="rootObject">The root object to search for all JSON Schemas.</param>
         /// <param name="settings">The generator settings.</param>
         public TypeScriptGenerator(object rootObject, TypeScriptGeneratorSettings settings)
-            : this(rootObject, settings, new TypeScriptTypeResolver(settings))
+            : this(rootObject, settings, new TypeScriptTypeResolver(rootObject, settings))
         {
         }
 
