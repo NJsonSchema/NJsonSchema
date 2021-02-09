@@ -385,9 +385,9 @@ namespace NJsonSchema.CodeGeneration.CSharp.Tests
             {
                 Type = JsonObjectType.String
             };
-            
+
             var generator = new CSharpGenerator(schema);
-            
+
             // Act
             var output = generator.GenerateFile("MyClass");
 
@@ -1615,7 +1615,7 @@ namespace NJsonSchema.CodeGeneration.CSharp.Tests
             Assert.Contains(@"public string Street { get; }", output);
             Assert.DoesNotContain(@"public string Street { get; set; }", output);
 
-            Assert.Contains("public Address(string @city, string @street)", output);
+            Assert.Contains("public Address(string @street, string @city)", output);
 
             AssertCompile(output);
         }
@@ -1684,11 +1684,11 @@ namespace NJsonSchema.CodeGeneration.CSharp.Tests
 
             Assert.Contains("protected AbstractAddress(string @city, string @streetName)", output);
 
-            Assert.Contains("public PostAddress(string @city, int @houseNumber, string @streetName, string @zip)", output);
+            Assert.Contains("public PostAddress(string @zip, int @houseNumber, string @city, string @streetName)", output);
             Assert.Contains(": base(city, streetName)", output);
 
-            Assert.Contains("public PersonAddress(string @addressee, string @city, int @houseNumber, string @streetName, string @zip)", output);
-            Assert.Contains(": base(city, houseNumber, streetName, zip)", output);
+            Assert.Contains("public PersonAddress(string @addressee, string @zip, int @houseNumber, string @city, string @streetName)", output);
+            Assert.Contains(": base(zip, houseNumber, city, streetName)", output);
 
             AssertCompile(output);
         }
