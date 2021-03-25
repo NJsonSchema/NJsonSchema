@@ -313,13 +313,6 @@ namespace NJsonSchema.CodeGeneration.Tests
                 .WithOptions(new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary))
                 .AddSyntaxTrees(CSharpSyntaxTree.ParseText(code));
 
-#if NET452
-            compilation = compilation.AddReferences(
-                MetadataReference.CreateFromFile(typeof(object).Assembly.Location),
-                MetadataReference.CreateFromFile(typeof(JsonConvert).Assembly.Location),
-                MetadataReference.CreateFromFile(typeof(GeneratedCodeAttribute).Assembly.Location),
-                MetadataReference.CreateFromFile(typeof(System.Linq.Expressions.Expression).Assembly.Location));
-#else
             var coreDir = Directory.GetParent(typeof(Enumerable).GetTypeInfo().Assembly.Location);            
             compilation = compilation.AddReferences(
                 MetadataReference.CreateFromFile(typeof(object).Assembly.Location),
@@ -332,7 +325,6 @@ namespace NJsonSchema.CodeGeneration.Tests
                 MetadataReference.CreateFromFile(coreDir.FullName + Path.DirectorySeparatorChar + "System.ObjectModel.dll"),
                 MetadataReference.CreateFromFile(coreDir.FullName + Path.DirectorySeparatorChar + "System.Linq.Expressions.dll"),
                 MetadataReference.CreateFromFile(coreDir.FullName + Path.DirectorySeparatorChar + "System.Runtime.Extensions.dll"));
-#endif
 
             using (var stream = new MemoryStream())
             {

@@ -11,7 +11,9 @@ using System;
 namespace NJsonSchema.Annotations
 {
     /// <summary>Specifies the type to use for JSON Schema generation.</summary>
-    [AttributeUsage(AttributeTargets.Parameter | AttributeTargets.ReturnValue | AttributeTargets.Property | AttributeTargets.Class, AllowMultiple = false)]
+    [AttributeUsage(
+        AttributeTargets.Parameter | AttributeTargets.ReturnValue | AttributeTargets.Property | AttributeTargets.Class,
+        AllowMultiple = false)]
     public class JsonSchemaTypeAttribute : Attribute
     {
         /// <summary>Initializes a new instance of the <see cref="JsonSchemaTypeAttribute"/> class.</summary>

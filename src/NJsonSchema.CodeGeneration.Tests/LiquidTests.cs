@@ -1,6 +1,6 @@
-﻿using DotLiquid;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Globalization;
+using Fluid;
 using Xunit;
 
 namespace NJsonSchema.CodeGeneration.Tests
@@ -22,12 +22,13 @@ namespace NJsonSchema.CodeGeneration.Tests
             model.Bar["Baz"] = "abc";
 
             /// Act
-            var hash = new LiquidProxyHash(model);
-            var template = Template.Parse("Hi {{ Foo }} {{ Bar[\"Baz\"] }}");
-            var text = template.Render(new RenderParameters(CultureInfo.InvariantCulture)
+            var context = new TemplateContext(model)
             {
-                LocalVariables = hash,
-            });
+                CultureInfo = CultureInfo.InvariantCulture
+            };
+            var parser = new FluidParser();
+            var template = parser.Parse("Hi {{ Foo }} {{ Bar[\"Baz\"] }}");
+            var text = template.Render(context);
 
             /// Assert
             Assert.Equal("Hi Foo. abc", text);
@@ -46,12 +47,13 @@ namespace NJsonSchema.CodeGeneration.Tests
             var liquid = "{% assign x = Bar[\"Baz\"] -%}{% for i in x -%}key1={{ i[\"key1\"] }},key2={{ i[\"key2\"] }}{% endfor -%}";
 
             /// Act
-            var hash = new LiquidProxyHash(model);
-            var template = Template.Parse(liquid);
-            var text = template.Render(new RenderParameters(CultureInfo.InvariantCulture)
+            var context = new TemplateContext(model)
             {
-                LocalVariables = hash,
-            });
+                CultureInfo = CultureInfo.InvariantCulture
+            };
+            var parser = new FluidParser();
+            var template = parser.Parse(liquid);
+            var text = template.Render(context);
 
             /// Assert
             Assert.Equal("key1=value1,key2=value2", text);

@@ -26,7 +26,8 @@ namespace NJsonSchema
                 return string.Empty;
             }
 
-            input = ConvertDashesToCamelCase((input[0].ToString().ToLowerInvariant() + (input.Length > 1 ? input.Substring(1) : ""))
+            input = ConvertDashesToCamelCase(
+                (input[0].ToString().ToLowerInvariant() + (input.Length > 1 ? input.Substring(1) : ""))
                 .Replace(" ", "_")
                 .Replace("/", "_"));
 
@@ -54,7 +55,8 @@ namespace NJsonSchema
                 return string.Empty;
             }
 
-            input = ConvertDashesToCamelCase((input[0].ToString().ToUpperInvariant() + (input.Length > 1 ? input.Substring(1) : ""))
+            input = ConvertDashesToCamelCase(
+                (input[0].ToString().ToUpperInvariant() + (input.Length > 1 ? input.Substring(1) : ""))
                 .Replace(" ", "_")
                 .Replace("/", "_"));
 
@@ -76,17 +78,39 @@ namespace NJsonSchema
             {
                 switch (c)
                 {
-                    case '\'': literal.Append(@"\'"); break;
-                    case '\"': literal.Append("\\\""); break;
-                    case '\\': literal.Append(@"\\"); break;
-                    case '\0': literal.Append(@"\0"); break;
-                    case '\a': literal.Append(@"\a"); break;
-                    case '\b': literal.Append(@"\b"); break;
-                    case '\f': literal.Append(@"\f"); break;
-                    case '\n': literal.Append(@"\n"); break;
-                    case '\r': literal.Append(@"\r"); break;
-                    case '\t': literal.Append(@"\t"); break;
-                    case '\v': literal.Append(@"\v"); break;
+                    case '\'':
+                        literal.Append(@"\'");
+                        break;
+                    case '\"':
+                        literal.Append("\\\"");
+                        break;
+                    case '\\':
+                        literal.Append(@"\\");
+                        break;
+                    case '\0':
+                        literal.Append(@"\0");
+                        break;
+                    case '\a':
+                        literal.Append(@"\a");
+                        break;
+                    case '\b':
+                        literal.Append(@"\b");
+                        break;
+                    case '\f':
+                        literal.Append(@"\f");
+                        break;
+                    case '\n':
+                        literal.Append(@"\n");
+                        break;
+                    case '\r':
+                        literal.Append(@"\r");
+                        break;
+                    case '\t':
+                        literal.Append(@"\t");
+                        break;
+                    case '\v':
+                        literal.Append(@"\v");
+                        break;
                     default:
                         // ASCII printable character
                         if (c >= 0x20 && c <= 0x7e)
@@ -97,11 +121,13 @@ namespace NJsonSchema
                         else
                         {
                             literal.Append(@"\u");
-                            literal.Append(((int)c).ToString("x4"));
+                            literal.Append(((int) c).ToString("x4"));
                         }
+
                         break;
                 }
             }
+
             return literal.ToString();
         }
 
@@ -169,9 +195,9 @@ namespace NJsonSchema
         public static string ConvertCSharpDocs(string input, int tabCount)
         {
             input = input?
-                .Replace("\r", string.Empty)
-                .Replace("\n", "\n" + string.Join("", Enumerable.Repeat("    ", tabCount)) + "/// ")
-                ?? string.Empty;
+                        .Replace("\r", string.Empty)
+                        .Replace("\n", "\n" + string.Join("", Enumerable.Repeat("    ", tabCount)) + "/// ")
+                    ?? string.Empty;
 
             return new XText(input).ToString();
         }
@@ -180,7 +206,7 @@ namespace NJsonSchema
         {
             var sb = new StringBuilder();
             var caseFlag = false;
-            foreach (char c in input)
+            foreach (var c in input)
             {
                 if (c == '-')
                 {
@@ -196,6 +222,7 @@ namespace NJsonSchema
                     sb.Append(c);
                 }
             }
+
             return sb.ToString();
         }
     }

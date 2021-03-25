@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>netstandard1.3;netstandard2.0;net451</TargetFrameworks>
+    <TargetFrameworks>netstandard2.0;net461</TargetFrameworks>
     <Description>JSON Schema reader, generator and validator for .NET</Description>
     <Version>10.4.1</Version>
     <PackageTags>json schema validation generator .net</PackageTags>
@@ -33,7 +33,6 @@
     <EmbeddedResource Include="Templates\File.ReferenceHandling.liquid" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Microsoft.CSharp" Version="4.3.0" />
     <PackageReference Include="Newtonsoft.Json" Version="9.0.1" />
   </ItemGroup>
   <ItemGroup>

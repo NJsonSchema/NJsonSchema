@@ -1,4 +1,4 @@
-﻿#if !NET46 && !NET452
+﻿#if !NET461
 
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
