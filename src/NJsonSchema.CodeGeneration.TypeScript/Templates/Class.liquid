@@ -6,7 +6,7 @@
 {%-   if property.HasDescription %}
     /** {{ property.Description }} */
 {%-   endif %}
-    {% if property.IsReadOnly %}readonly {% endif %}{{ property.PropertyName }}{% if property.IsOptional %}?{% elseif RequiresStrictPropertyInitialization && property.HasDefaultValue == false %}!{% endif %}: {{ property.Type }}{{ property.TypePostfix }};
+    {% if property.IsReadOnly %}readonly {% endif %}{{ property.PropertyName }}{% if property.IsOptional %}?{% elsif RequiresStrictPropertyInitialization and property.HasDefaultValue == false %}!{% endif %}: {{ property.Type }}{{ property.TypePostfix }};
 {%- endfor %}
 {%- if HasIndexerProperty %}
 
@@ -17,12 +17,13 @@
     protected _discriminator: string;
 {%- endif %}
 
+{%- assign condition_temp = HasInheritance == false or ConvertConstructorInterfaceData %}
 {%- if GenerateConstructorInterface or HasBaseDiscriminator %}
     constructor({% if GenerateConstructorInterface %}data?: I{{ ClassName }}{% endif %}) {
 {%-     if HasInheritance %}
         super({% if GenerateConstructorInterface %}data{% endif %});
 {%-     endif %}
-{%-     if GenerateConstructorInterface and (HasInheritance == false or ConvertConstructorInterfaceData) %}
+{%-     if GenerateConstructorInterface and condition_temp %}
         if (data) {
 {%-         if HasInheritance == false %}
             for (var property in data) {
@@ -41,7 +42,7 @@
                     this.{{ property.PropertyName }}[i] = item && !(<any>item).toJSON ? new {{ property.ArrayItemType }}(item) : <{{ property.ArrayItemType }}>item;
                 }
             }
-{%-                     elseif property.IsDictionary %}
+{%-                     elsif property.IsDictionary %}
             if (data.{{ property.PropertyName }}) {
                 this.{{ property.PropertyName }} = {};
                 for (let key in data.{{ property.PropertyName }}) {
