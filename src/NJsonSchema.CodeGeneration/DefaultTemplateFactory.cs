@@ -159,7 +159,7 @@ namespace NJsonSchema.CodeGeneration
                     var template = Templates.GetOrAdd(key, _ => 
                     {
                         var data = Regex.Replace("\n" + _data, "(\n( )*?)\\{% template (.*?) %}", m =>
-                                "\n{%- " + TemplateTagName + " " + m.Groups[3].Value + " " + m.Groups[1].Value.Length / 4 + " -%}",
+                                "\n{%- " + TemplateTagName + " " + m.Groups[3].Value + " " + m.Groups[1].Value.Length / 4 + " %}",
                             RegexOptions.Singleline).Trim();
 
                         data = Regex.Replace("\n" + data, "\\{% template (.*?) %}", m =>

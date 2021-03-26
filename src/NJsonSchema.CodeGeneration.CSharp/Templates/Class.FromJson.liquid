@@ -1,14 +1,14 @@
 ﻿public static {{ ClassName }} FromJson(string data)
 {
-{% if UseSystemTextJson -%}
+{%- if UseSystemTextJson %}
     var options = {{ JsonSerializerParameterCode }};
-{% if JsonConvertersArrayCode contains "System.Text.Json.Serialization.JsonConverter[]" -%}
+{%- if JsonConvertersArrayCode contains "System.Text.Json.Serialization.JsonConverter[]" %}
     var converters = {{ JsonConvertersArrayCode }};
     foreach(var converter in converters)
         options.Converters.Add(converter);
-{% endif -%}
+{%- endif %}
     return System.Text.Json.JsonSerializer.Deserialize<{{ ClassName }}>(data, options);
-{% else -%}
+{%- else %}
     return Newtonsoft.Json.JsonConvert.DeserializeObject<{{ ClassName }}>(data, {{ JsonSerializerParameterCode }});
-{% endif -%}
+{%- endif %}
 }

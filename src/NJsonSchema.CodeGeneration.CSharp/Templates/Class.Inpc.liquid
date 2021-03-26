@@ -1,4 +1,4 @@
-﻿{% if HasInheritance == false -%}
+﻿{%- if HasInheritance == false %}
 public event System.ComponentModel.PropertyChangedEventHandler{% if GenerateNullableReferenceTypes %}?{% endif %} PropertyChanged;
 
 protected virtual void RaisePropertyChanged([System.Runtime.CompilerServices.CallerMemberName] string{% if GenerateNullableReferenceTypes %}?{% endif %} propertyName = null)
@@ -7,4 +7,4 @@ protected virtual void RaisePropertyChanged([System.Runtime.CompilerServices.Cal
     if (handler != null) 
         handler(this, new System.ComponentModel.PropertyChangedEventArgs(propertyName));
 }
-{% endif -%}
+{%- endif %}

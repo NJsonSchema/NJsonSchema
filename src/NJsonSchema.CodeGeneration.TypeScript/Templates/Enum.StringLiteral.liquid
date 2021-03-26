@@ -1,4 +1,4 @@
-﻿{% if HasDescription -%}
+﻿{%- if HasDescription %}
 /** {{ Description }} */
-{% endif -%}
-{% if ExportTypes %}export {% endif %}type {{ Name }} = {% for enumeration in Enums -%}{% if Enums.first.Value != enumeration.Value %} | {% endif %}{{ enumeration.Value }}{% endfor -%};
+{%- endif %}
+{%- if ExportTypes %}export {% endif %}type {{ Name }} = {% for enumeration in Enums %}{%- if Enums.first.Value != enumeration.Value %} | {% endif %}{{ enumeration.Value }}{% endfor %};

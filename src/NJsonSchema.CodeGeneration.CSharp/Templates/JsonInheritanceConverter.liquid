@@ -1,5 +1,5 @@
 ﻿[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "{{ ToolchainVersion }}")]
-{% if UseSystemTextJson -%}
+{%- if UseSystemTextJson %}
 internal class JsonInheritanceConverterAttribute : JsonConverterAttribute
 {
     public string DiscriminatorName { get; }
@@ -114,7 +114,7 @@ internal class JsonInheritanceConverter<TBase> : System.Text.Json.Serialization.
         return objectType.Name;
     }
 }
-{% else -%}
+{%- else %}
 internal class JsonInheritanceConverter : Newtonsoft.Json.JsonConverter
 {
     internal static readonly string DefaultDiscriminatorName = "discriminator";
@@ -233,4 +233,4 @@ internal class JsonInheritanceConverter : Newtonsoft.Json.JsonConverter
         return objectType.Name;
     }
 }
-{% endif -%}
+{%- endif %}

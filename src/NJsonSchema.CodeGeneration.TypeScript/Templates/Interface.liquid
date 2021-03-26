@@ -1,15 +1,15 @@
-﻿{% if HasDescription -%}
+﻿{%- if HasDescription %}
 /** {{ Description }} */
-{% endif -%}
+{%- endif %}
 {% if ExportTypes %}export {% endif %}interface {{ ClassName }}{{ Inheritance }} {
-{% for property in Properties -%}
-{%     if property.HasDescription -%}
+{%- for property in Properties %}
+{%-     if property.HasDescription %}
     /** {{ property.Description }} */
-{%     endif -%}
+{%-     endif %}
     {% if property.IsReadOnly %}readonly {% endif %}{{ property.InterfaceName }}{% if property.IsOptional %}?{% endif %}: {{ property.Type }}{{ property.TypePostfix }};
-{% endfor -%}
-{% if HasIndexerProperty -%}
+{%- endfor %}
+{%- if HasIndexerProperty %}
 
     [key: string]: {{ IndexerPropertyValueType }}; 
-{% endif -%}
+{%- endif %}
 }

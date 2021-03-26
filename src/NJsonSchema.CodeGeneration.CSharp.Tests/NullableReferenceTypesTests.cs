@@ -61,8 +61,8 @@ namespace NJsonSchema.CodeGeneration.Tests.CSharp
             var code = generator.GenerateFile("MyClass");
 
             //// Assert
-            Assert.Contains("public object? Property { get; set; }= default!;", code);
-            Assert.Contains("public object Property2 { get; set; }= default!;", code);
+            Assert.Contains("public object? Property { get; set; } = default!;", code);
+            Assert.Contains("public object Property2 { get; set; } = default!;", code);
         }
 
         [Fact]
@@ -145,7 +145,7 @@ namespace NJsonSchema.CodeGeneration.Tests.CSharp
             var code = generator.GenerateFile("MyClass");
 
             //// Assert
-            Assert.Contains("public object? Property { get; set; }= default!;", code);
+            Assert.Contains("public object? Property { get; set; } = default!;", code);
             Assert.Contains("public object Property2 { get; set; } = new object();", code);
         }
     }

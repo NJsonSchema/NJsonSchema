@@ -1,21 +1,21 @@
-﻿{% if HasDescription -%}
+﻿{%- if HasDescription %}
 /// <summary>{{ Description | csharpdocs }}</summary>
-{% endif -%}
+{%- endif %}
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "{{ ToolchainVersion }}")]
-{% if IsEnumAsBitFlags -%}
+{%- if IsEnumAsBitFlags %}
 [System.Flags]
-{% endif -%}
+{%- endif %}
 {{ TypeAccessModifier }} enum {{ Name }}
 {
-{% for enum in Enums -%}
-{%   if IsStringEnum -%}
+{%- for enum in Enums %}
+{%-   if IsStringEnum %}
     [System.Runtime.Serialization.EnumMember(Value = @"{{ enum.Value | replace: '"', '""' }}")]
-{%   endif -%}
-{% if IsEnumAsBitFlags -%}
+{%-   endif %}
+{%- if IsEnumAsBitFlags %}
     {{ enum.Name }} = {{ enum.InternalFlagValue }},
-{% else -%}
+{%- else %}
     {{ enum.Name }} = {{ enum.InternalValue }},
-{% endif -%}
+{%- endif %}
 
-{% endfor -%}
+{%- endfor %}
 }
