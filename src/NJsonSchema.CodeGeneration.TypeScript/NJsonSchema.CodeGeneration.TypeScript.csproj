@@ -46,4 +46,9 @@
   <ItemGroup>
     <None Include="NuGetIcon.png" Pack="true" PackagePath="\" />
   </ItemGroup>
+  <ItemGroup>
+    <Compile Include="..\NJsonSchema\Infrastructure\EnumExtensions.cs">
+      <Link>EnumExtensions.cs</Link>
+    </Compile>
+  </ItemGroup>
 </Project>

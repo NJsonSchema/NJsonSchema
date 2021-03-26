@@ -63,7 +63,7 @@ namespace NJsonSchema.CodeGeneration.CSharp.Models
                     var value = _schema.Enumeration.ElementAt(i);
                     if (value != null)
                     {
-                        if (_schema.Type.HasFlag(JsonObjectType.Integer))
+                        if (_schema.Type.IsInteger())
                         {
                             var name = _schema.EnumerationNames.Count > i ?
                                 _schema.EnumerationNames.ElementAt(i) : "_" + value;

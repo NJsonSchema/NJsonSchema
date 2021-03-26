@@ -1,3 +1,5 @@
+using System.Runtime.CompilerServices;
+
 namespace NJsonSchema.Benchmark
 {
     public static class Program
@@ -13,6 +15,16 @@ namespace NJsonSchema.Benchmark
             var benchmark = new CsharpGeneratorBenchmark();
             benchmark.Setup().GetAwaiter().GetResult();
             benchmark.GenerateFile();
+            RunCode(benchmark);
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private static void RunCode(CsharpGeneratorBenchmark benchmark)
+        {
+            for (int i = 0; i < 100; ++i)
+            {
+                benchmark.GenerateFile();
+            }
         }
     }
 }

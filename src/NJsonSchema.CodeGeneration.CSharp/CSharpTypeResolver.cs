@@ -95,17 +95,17 @@ namespace NJsonSchema.CodeGeneration.CSharp
                     JsonObjectType.String;
             }
 
-            if (type.HasFlag(JsonObjectType.Number))
+            if (type.IsNumber())
             {
                 return ResolveNumber(schema.ActualTypeSchema, isNullable);
             }
 
-            if (type.HasFlag(JsonObjectType.Integer) && !schema.ActualTypeSchema.IsEnumeration)
+            if (type.IsInteger() && !schema.ActualTypeSchema.IsEnumeration)
             {
                 return ResolveInteger(schema.ActualTypeSchema, isNullable, typeNameHint);
             }
 
-            if (type.HasFlag(JsonObjectType.Boolean))
+            if (type.IsBoolean())
             {
                 return ResolveBoolean(isNullable);
             }
@@ -118,14 +118,14 @@ namespace NJsonSchema.CodeGeneration.CSharp
                 return "byte[]" + nullableReferenceType;
             }
 
-            if (type.HasFlag(JsonObjectType.String) && !schema.ActualTypeSchema.IsEnumeration)
+            if (type.IsString() && !schema.ActualTypeSchema.IsEnumeration)
             {
                 return ResolveString(schema.ActualTypeSchema, isNullable, typeNameHint);
             }
 
             // Type generating schemas
 
-            if (schema.Type.HasFlag(JsonObjectType.Array))
+            if (schema.Type.IsArray())
             {
                 return ResolveArrayOrTuple(schema) + nullableReferenceType;
             }

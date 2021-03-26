@@ -71,13 +71,13 @@ namespace NJsonSchema.CodeGeneration.TypeScript.Models
                 if (IsArray)
                 {
                     return _resolver.SupportsConstructorConversion(_property.ActualTypeSchema?.Item) &&
-                        _property.ActualTypeSchema?.Item.ActualSchema.Type.HasFlag(JsonObjectType.Object) == true;
+                        _property.ActualTypeSchema?.Item.ActualSchema.Type.IsObject() == true;
                 }
 
                 if (IsDictionary)
                 {
                     return _resolver.SupportsConstructorConversion(_property.ActualTypeSchema?.AdditionalPropertiesSchema) &&
-                        _property.ActualTypeSchema?.AdditionalPropertiesSchema.ActualSchema.Type.HasFlag(JsonObjectType.Object) == true;
+                        _property.ActualTypeSchema?.AdditionalPropertiesSchema.ActualSchema.Type.IsObject() == true;
                 }
 
                 return _resolver.SupportsConstructorConversion(_property) &&

@@ -7,6 +7,7 @@
 //-----------------------------------------------------------------------
 
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Xml.Linq;
 
@@ -54,7 +55,7 @@ namespace NJsonSchema
                 return string.Empty;
             }
 
-            input = ConvertDashesToCamelCase((input[0].ToString().ToUpperInvariant() + (input.Length > 1 ? input.Substring(1) : ""))
+            input = ConvertDashesToCamelCase(Capitalize(input)
                 .Replace(" ", "_")
                 .Replace("/", "_"));
 
@@ -64,6 +65,20 @@ namespace NJsonSchema
             }
 
             return input;
+        }
+
+        [MethodImpl((MethodImplOptions) 256)]
+        private static string Capitalize(string input)
+        {
+            if (char.IsUpper(input[0]))
+            {
+                return input;
+            }
+            if (input.Length == 1)
+            {
+                return char.ToUpperInvariant(input[0]).ToString();
+            }            
+            return char.ToUpperInvariant(input[0]) + input.Substring(1);
         }
 
         /// <summary>Converts the string to a string literal which can be used in C# or TypeScript code.</summary>
