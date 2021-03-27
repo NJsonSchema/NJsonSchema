@@ -171,7 +171,7 @@
 }
 {%- if GenerateConstructorInterface %}
 
-{%-   if HasDescription %}
+{%   if HasDescription %}
 /** {{ Description }} */
 {%-   endif %}
 {% if ExportTypes %}export {% endif %}interface I{{ ClassName }}{{ InterfaceInheritance }} {

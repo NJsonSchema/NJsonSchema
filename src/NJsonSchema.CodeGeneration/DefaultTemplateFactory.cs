@@ -248,49 +248,44 @@ namespace NJsonSchema.CodeGeneration
                 TextEncoder encoder,
                 TemplateContext context)
             {
-                try
+                var memberExpression = (MemberExpression) arguments.Item1;
+                var templateName = "";
+                foreach (var identifier in memberExpression.Segments.Cast<IdentifierSegment>().Where(x => x != null))
                 {
-                    var memberExpression = (MemberExpression) arguments.Item1;
-                    var templateName = "";
-                    foreach (var identifier in memberExpression.Segments.Cast<IdentifierSegment>().Where(x => x != null))
+                    if (templateName != "")
                     {
-                        if (templateName != "")
-                        {
-                            templateName += ".";
-                        }
-
-                        templateName += identifier.Identifier;
+                        templateName += ".";
                     }
 
-                    var extraParameters = await arguments.Item2.EvaluateAsync(context);
-                    var _tabCount = (int) extraParameters.ToNumberValue();
-
-                    var settings = (CodeGeneratorSettingsBase) context.AmbientValues[SettingsKey];
-                    var language = (string) context.AmbientValues[LanguageKey];
-                    templateName = !string.IsNullOrEmpty(templateName)
-                        ? templateName 
-                        : (string) context.AmbientValues[TemplateKey] + "!";
-
-                    var template = settings.TemplateFactory.CreateTemplate(language, templateName, context.Model);
-                    var output = template.Render().Trim();
-
-                    if (string.IsNullOrEmpty(output))
-                    {
-                        await writer.WriteAsync(string.Empty);
-                    }
-                    else if (_tabCount >= 0)
-                    {
-                        await writer.WriteAsync(string.Join("", Enumerable.Repeat("    ", _tabCount)) + ConversionUtilities.Tab(output, _tabCount) + "\r\n");
-                    }
-                    else
-                    {
-                        await writer.WriteAsync(output);
-                    }
+                    templateName += identifier.Identifier;
                 }
-                catch (InvalidOperationException)
+
+                var extraParameters = await arguments.Item2.EvaluateAsync(context);
+                var _tabCount = (int) extraParameters.ToNumberValue();
+
+                var settings = (CodeGeneratorSettingsBase) context.AmbientValues[SettingsKey];
+                var language = (string) context.AmbientValues[LanguageKey];
+                templateName = !string.IsNullOrEmpty(templateName)
+                    ? templateName
+                    : (string) context.AmbientValues[TemplateKey] + "!";
+
+                var template = settings.TemplateFactory.CreateTemplate(language, templateName, context.Model);
+                var output = template.Render().Trim();
+
+                if (string.IsNullOrEmpty(output))
                 {
+                    await writer.WriteAsync(string.Empty);
                 }
-                
+                else if (_tabCount >= 0)
+                {
+                    await writer.WriteAsync(string.Join("", Enumerable.Repeat("    ", _tabCount)) +
+                                            ConversionUtilities.Tab(output, _tabCount) + "\r\n");
+                }
+                else
+                {
+                    await writer.WriteAsync(output);
+                }
+
                 return Completion.Normal;
             }
         }

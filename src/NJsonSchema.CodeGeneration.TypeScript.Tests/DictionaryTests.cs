@@ -34,7 +34,7 @@ namespace NJsonSchema.CodeGeneration.TypeScript.Tests
 
             //// Assert
             Assert.DoesNotContain("extends { [key: string]: any; }", code);
-            Assert.Contains("[key: string]: any; ", code);
+            Assert.Contains("[key: string]: any;", code);
         }
 
         [Fact]
@@ -55,7 +55,7 @@ namespace NJsonSchema.CodeGeneration.TypeScript.Tests
             //// Assert
             Assert.DoesNotContain("extends { [key: string]: any; }", code);
             Assert.DoesNotContain("super()", code);
-            Assert.Contains("[key: string]: any; ", code);
+            Assert.Contains("[key: string]: any;", code);
         }
 
         [Fact]
@@ -75,7 +75,7 @@ namespace NJsonSchema.CodeGeneration.TypeScript.Tests
 
             //// Assert
             Assert.DoesNotContain("extends { [key: string]: string; }", code);
-            Assert.Contains("[key: string]: string | any; ", code);
+            Assert.Contains("[key: string]: string | any;", code);
         }
 
         [Fact]
@@ -96,7 +96,7 @@ namespace NJsonSchema.CodeGeneration.TypeScript.Tests
             //// Assert
             Assert.DoesNotContain("extends { [key: string]: string; }", code);
             Assert.DoesNotContain("super()", code);
-            Assert.Contains("[key: string]: string | any; ", code);
+            Assert.Contains("[key: string]: string | any;", code);
         }
 
         [Fact]

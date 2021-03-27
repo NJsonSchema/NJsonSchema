@@ -30,7 +30,7 @@ if ({{ Value }}) {
 {%-     elsif IsDictionaryValueDate or IsDictionaryValueDateTime %}
             (<any>{{ Variable }}){% if RequiresStrictPropertyInitialization %}!{% endif %}[key] = {{ Value }}[key] ? {{ StringToDateCode }}({{ Value }}[key].toString()) : {% if HasDictionaryValueDefaultValue %}{{ DictionaryValueDefaultValue }}{% else %}<any>{{ NullValue }}{% endif %};
 {%-     else %}
-{%-         if(HasDictionaryValueDefaultValue || NullValue != "undefined"){ %}
+{%-         if HasDictionaryValueDefaultValue or NullValue != "undefined" %}
             (<any>{{ Variable }}){% if RequiresStrictPropertyInitialization %}!{% endif %}[key] = {{ Value }}[key] !== undefined ? {{ Value }}[key] : {% if HasDictionaryValueDefaultValue %}{{ DictionaryValueDefaultValue }}{% else %}<any>{{ NullValue }}{% endif %};
 {%-         else %}
             (<any>{{ Variable }}){% if RequiresStrictPropertyInitialization %}!{% endif %}[key] = {{ Value }}[key];
