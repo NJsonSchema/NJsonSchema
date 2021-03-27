@@ -248,16 +248,20 @@ namespace NJsonSchema.CodeGeneration
                 TextEncoder encoder,
                 TemplateContext context)
             {
-                var memberExpression = (MemberExpression) arguments.Item1;
                 var templateName = "";
-                foreach (var identifier in memberExpression.Segments.Cast<IdentifierSegment>().Where(x => x != null))
+                var segments = ((MemberExpression) arguments.Item1).Segments;
+                for (var i = 0; i < segments.Count; i++)
                 {
-                    if (templateName != "")
+                    var segment = segments[i];
+                    if (segment is IdentifierSegment identifierSegment)
                     {
-                        templateName += ".";
-                    }
+                        if (templateName != "")
+                        {
+                            templateName += ".";
+                        }
 
-                    templateName += identifier.Identifier;
+                        templateName += identifierSegment.Identifier;
+                    }
                 }
 
                 var extraParameters = await arguments.Item2.EvaluateAsync(context);
