@@ -8,6 +8,7 @@
 
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -111,7 +112,7 @@ namespace NJsonSchema.CodeGeneration
 
         internal class LiquidTemplate : ITemplate
         {
-            internal const string TemplateTagName = "__njs_template";
+            internal const string TemplateTagName = "template";
             private static readonly ConcurrentDictionary<(string, string), IFluidTemplate> Templates = new ConcurrentDictionary<(string, string), IFluidTemplate>();
 
             static LiquidTemplate()
@@ -158,15 +159,10 @@ namespace NJsonSchema.CodeGeneration
                     var key = (_language, _template);
                     var template = Templates.GetOrAdd(key, _ => 
                     {
+                        // tab count parameters to template based on surrounding code, how many spaces before the template tag
                         var data = Regex.Replace("\n" + _data, "(\n( )*?)\\{% template (.*?) %}", m =>
                                 "\n{%- " + TemplateTagName + " " + m.Groups[3].Value + " " + m.Groups[1].Value.Length / 4 + " %}",
                             RegexOptions.Singleline).Trim();
-
-                        data = Regex.Replace("\n" + data, "\\{% template (.*?) %}", m =>
-                                "{% " + TemplateTagName + " " + m.Groups[1].Value + " -1 %}",
-                            RegexOptions.Singleline).Trim();
-
-                        data = data.Replace("{% template %}", "{% " + TemplateTagName + " %}");
 
                         data = Regex.Replace(data, "(\n( )*)([^\n]*?) \\| csharpdocs }}", m =>
                             m.Groups[1].Value + m.Groups[3].Value + " | csharpdocs: " + m.Groups[1].Value.Length / 4 + " }}",
@@ -233,23 +229,23 @@ namespace NJsonSchema.CodeGeneration
 
         private sealed class LiquidParser : FluidParser
         {
-            public static string LanguageKey = "__language";
-            public static string TemplateKey = "__template";
-            public static string SettingsKey = "__settings";
+            internal const string LanguageKey = "__language";
+            internal const string TemplateKey = "__template";
+            internal const string SettingsKey = "__settings";
 
             public LiquidParser()
             {
-                RegisterParserTag(LiquidTemplate.TemplateTagName, Primary.And(Primary), RenderTemplate);
+                RegisterParserTag(LiquidTemplate.TemplateTagName, Parsers.OneOrMany(Primary), RenderTemplate);
             }
             
             private static async ValueTask<Completion> RenderTemplate(
-                ValueTuple<Expression, Expression> arguments,
+                List<Expression> arguments,
                 TextWriter writer, 
                 TextEncoder encoder,
                 TemplateContext context)
             {
                 var templateName = "";
-                var segments = ((MemberExpression) arguments.Item1).Segments;
+                var segments = ((MemberExpression) arguments[0]).Segments;
                 for (var i = 0; i < segments.Count; i++)
                 {
                     var segment = segments[i];
@@ -264,8 +260,11 @@ namespace NJsonSchema.CodeGeneration
                     }
                 }
 
-                var extraParameters = await arguments.Item2.EvaluateAsync(context);
-                var _tabCount = (int) extraParameters.ToNumberValue();
+                var tabCount = -1;
+                if (arguments.Count > 1 && arguments[1] is LiteralExpression literalExpression)
+                {
+                    tabCount = (int) literalExpression.Value.ToNumberValue();
+                }
 
                 var settings = (CodeGeneratorSettingsBase) context.AmbientValues[SettingsKey];
                 var language = (string) context.AmbientValues[LanguageKey];
@@ -280,10 +279,14 @@ namespace NJsonSchema.CodeGeneration
                 {
                     await writer.WriteAsync(string.Empty);
                 }
-                else if (_tabCount >= 0)
+                else if (tabCount >= 0)
                 {
-                    await writer.WriteAsync(string.Join("", Enumerable.Repeat("    ", _tabCount)) +
-                                            ConversionUtilities.Tab(output, _tabCount) + "\r\n");
+                    for (var i = 0; i < tabCount; ++i)
+                    {
+                        await writer.WriteAsync("    ");
+                    }
+                    await writer.WriteAsync(ConversionUtilities.Tab(output, tabCount));
+                    await writer.WriteAsync("\r\n");
                 }
                 else
                 {

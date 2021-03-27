@@ -18,7 +18,7 @@
 {%- endif %}
 
 {%- assign condition_temp = HasInheritance == false or ConvertConstructorInterfaceData %}
-{%- if GenerateConstructorInterface or HasBaseDiscriminator %}
+{% if GenerateConstructorInterface or HasBaseDiscriminator %}
     constructor({% if GenerateConstructorInterface %}data?: I{{ ClassName }}{% endif %}) {
 {%-     if HasInheritance %}
         super({% if GenerateConstructorInterface %}data{% endif %});
