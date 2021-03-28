@@ -260,7 +260,7 @@ namespace NJsonSchema.CodeGeneration
                 RegisterParserTag(LiquidTemplate.TemplateTagName, Parsers.OneOrMany(Primary), RenderTemplate);
             }
             
-            private static async ValueTask<Completion> RenderTemplate(
+            private static ValueTask<Completion> RenderTemplate(
                 List<Expression> arguments,
                 TextWriter writer, 
                 TextEncoder encoder,
@@ -285,18 +285,18 @@ namespace NJsonSchema.CodeGeneration
 
                 if (string.IsNullOrEmpty(output))
                 {
-                    await writer.WriteAsync(string.Empty);
+                    writer.Write(string.Empty);
                 }
                 else if (tabCount > 0)
                 {
-                    await writer.WriteAsync(ConversionUtilities.Tab(output, tabCount));
+                    ConversionUtilities.Tab(output, tabCount, writer);
                 }
                 else
                 {
-                    await writer.WriteAsync(output);
+                    writer.Write(output);
                 }
 
-                return Completion.Normal;
+                return new ValueTask<Completion>(Completion.Normal);
             }
         }
        

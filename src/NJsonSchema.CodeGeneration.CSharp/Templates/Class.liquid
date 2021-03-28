@@ -24,7 +24,7 @@
 {%- if IsDeprecated %}
 [System.Obsolete{% if HasDeprecatedMessage %}({{ DeprecatedMessage | literal }}){% endif %}]
 {%- endif %}
-{% template Class.Annotations %}
+{%- template Class.Annotations %}
 {{ TypeAccessModifier }} {% if IsAbstract %}abstract {% endif %}partial class {{ClassName}}{% template Class.Inheritance %}
 {
 {%- if IsTuple %}
@@ -39,9 +39,9 @@
 {%- endfor %}
 
 {%- endif %}
-    {% template Class.Constructor %}
+    {%- template Class.Constructor %}
 {%- if RenderRecord == true %}
-    {% template Class.Constructor.Record %}
+    {%- template Class.Constructor.Record %}
 
 {%- endif %}
 {%- for property in Properties %}
@@ -91,7 +91,7 @@
 {%-   if property.IsDeprecated %}
     [System.Obsolete{% if property.HasDeprecatedMessage %}({{ property.DeprecatedMessage | literal }}){% endif %}]
 {%-   endif %}
-{% template Class.Property.Annotations %}
+{%- template Class.Property.Annotations %}
     public {{ property.Type }} {{ property.PropertyName }}{% if RenderInpc == false and RenderPrism == false %} { get; {% if property.HasSetter and RenderRecord == false %}set; {% endif %}}{% if property.HasDefaultValue and RenderRecord == false %} = {{ property.DefaultValue }};{% elsif GenerateNullableReferenceTypes and RenderRecord == false %} = default!;{% endif %}
 {%- else %}
     {
@@ -130,14 +130,14 @@
 
 {%- endif %}
 {%- if GenerateJsonMethods %}
-    {% template Class.ToJson %}
+    {%- template Class.ToJson %}
 
-    {% template Class.FromJson %}
+    {%- template Class.FromJson %}
 {%- endif %}
 {%- if RenderInpc %}
 
-    {% template Class.Inpc %}
+    {%- template Class.Inpc %}
 {%- endif %}
 
-    {% template Class.Body %}
+    {%- template Class.Body %}
 }

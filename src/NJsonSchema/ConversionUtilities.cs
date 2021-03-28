@@ -8,7 +8,6 @@
 
 using System.Globalization;
 using System.IO;
-using System.Linq;
 using System.Text;
 using System.Xml.Linq;
 
@@ -191,30 +190,60 @@ namespace NJsonSchema
             {
                 return "";
             }
-            var tabString = CreateTabString(tabCount);
-            return AddPrefixToBeginningOfNonEmptyLines(input, tabString);
+            var stringWriter = new StringWriter(new StringBuilder(input.Length), CultureInfo.CurrentCulture);
+            Tab(input, tabCount, stringWriter);
+            return stringWriter.ToString();
         }
 
-        private static string AddPrefixToBeginningOfNonEmptyLines(string input, string tabString)
+        /// <summary>Add tabs to the given string.</summary>
+        /// <param name="input">The input.</param>
+        /// <param name="tabCount">The tab count.</param>
+        /// <param name="writer">Stream to write transformed content into.</param>
+        /// <returns>The output.</returns>
+        public static void Tab(string input, int tabCount, TextWriter writer)
+        {
+            var tabString = CreateTabString(tabCount);
+            AddPrefixToBeginningOfNonEmptyLines(input, tabString, writer);
+        }
+
+        private static void AddPrefixToBeginningOfNonEmptyLines(string input, string tabString, TextWriter writer)
         {
             if (tabString.Length == 0)
             {
-                return input;
+                return;
             }
             
-            var stringWriter = new StringWriter(new StringBuilder(input.Length), CultureInfo.CurrentCulture);
             for (var i = 0; i < input.Length; i++)
             {
                 var c = input[i];
-                stringWriter.Write(c);
-                if (c == '\n' && i + 1 < input.Length && input[i + 1] != '\n')
+                writer.Write(c);
+                if (c == '\n')
                 {
                     // only write if not entirely empty line
-                    stringWriter.Write(tabString);
+                    var foundNonEmptyBeforeNewLine = false;
+                    for (var j = i + 1; j < input.Length; ++j)
+                    {
+                        var c2 = input[j];
+                        if (c2 == '\n')
+                        {
+                            break;
+                        }
+
+                        if (char.IsWhiteSpace(c2))
+                        {
+                            continue;
+                        }
+
+                        foundNonEmptyBeforeNewLine = true;
+                        break;
+                    }
+
+                    if (foundNonEmptyBeforeNewLine)
+                    {
+                        writer.Write(tabString);
+                    }
                 }
             }
-
-            return stringWriter.ToString();
         }
 
         /// <summary>Converts all line breaks in a string into '\n' and removes white spaces.</summary>
@@ -231,9 +260,10 @@ namespace NJsonSchema
             input = input
                 .Replace("\r", string.Empty);
 
-            input = AddPrefixToBeginningOfNonEmptyLines(input, tabString + "/// ");
+            var stringWriter = new StringWriter(new StringBuilder(input.Length), CultureInfo.CurrentCulture);
+            AddPrefixToBeginningOfNonEmptyLines(input, tabString + "/// ", stringWriter);
 
-            return new XText(input).ToString();
+            return new XText(stringWriter.ToString()).ToString();
         }
 
         private static string CreateTabString(int tabCount)
