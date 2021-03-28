@@ -193,7 +193,7 @@ namespace NJsonSchema.CodeGeneration.Tests.CSharp
             var code = generator.GenerateFile("Foo").Replace("\r\n", "\n");
 
             //// Assert
-            Assert.Contains(@"  public partial class Foo : Anonymous
+            Assert.Contains(@"    public partial class Foo : Anonymous
     {
         [Newtonsoft.Json.JsonProperty(""prop1"", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public string Prop1 { get; set; }

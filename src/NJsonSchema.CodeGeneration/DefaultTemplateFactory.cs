@@ -110,7 +110,7 @@ namespace NJsonSchema.CodeGeneration
             return GetEmbeddedLiquidTemplate(language, template);
         }
 
-        internal class LiquidTemplate : ITemplate
+        private sealed class LiquidTemplate : ITemplate
         {
             internal const string TemplateTagName = "template";
             private static readonly ConcurrentDictionary<(string, string), IFluidTemplate> Templates = new ConcurrentDictionary<(string, string), IFluidTemplate>();
@@ -159,9 +159,14 @@ namespace NJsonSchema.CodeGeneration
                     var key = (_language, _template);
                     var template = Templates.GetOrAdd(key, _ => 
                     {
+                        // make te parameter a string literal as it's more valid and faster to process
+                        var data = Regex.Replace(_data, @"\{%\s+template\s+([a-zA-Z0-9_.]+)(\s*?.*?)\s%}", 
+                            m => "{% " + TemplateTagName + " '" + (m.Groups[1].Value + "' " + m.Groups[2].Value).TrimEnd() + " %}",
+                            RegexOptions.Singleline);
+                        
                         // tab count parameters to template based on surrounding code, how many spaces before the template tag
-                        var data = Regex.Replace("\n" + _data, "(\n( )*?)\\{% template (.*?) %}", m =>
-                                "\n{%- " + TemplateTagName + " " + m.Groups[3].Value + " " + m.Groups[1].Value.Length / 4 + " %}",
+                        data = Regex.Replace("\n" + data, "(\n( )*?)\\{% template (.*?) %}", m =>
+                                "\n{%- template " + m.Groups[3].Value + " " + m.Groups[1].Value.Length / 4 + " %}",
                             RegexOptions.Singleline).Trim();
 
                         data = Regex.Replace(data, "(\n( )*)([^\n]*?) \\| csharpdocs }}", m =>
@@ -194,14 +199,14 @@ namespace NJsonSchema.CodeGeneration
         {
             public static ValueTask<FluidValue> Csharpdocs(FluidValue input, FilterArguments arguments, TemplateContext context)
             {
-                var tabCount = (int) arguments["tabCount"].ToNumberValue();
+                var tabCount = (int) arguments.At(0).ToNumberValue();
                 var converted = ConversionUtilities.ConvertCSharpDocs(input.ToStringValue(), tabCount);
                 return new ValueTask<FluidValue>(new StringValue(converted));
             }
 
             public static ValueTask<FluidValue> Tab(FluidValue input, FilterArguments arguments, TemplateContext context)
             {
-                var tabCount = (int) arguments["tabCount"].ToNumberValue();
+                var tabCount = (int) arguments.At(0).ToNumberValue();
                 var converted = ConversionUtilities.Tab(input.ToStringValue(), tabCount);
                 return new ValueTask<FluidValue>(new StringValue(converted));
             }
@@ -244,21 +249,7 @@ namespace NJsonSchema.CodeGeneration
                 TextEncoder encoder,
                 TemplateContext context)
             {
-                var templateName = "";
-                var segments = ((MemberExpression) arguments[0]).Segments;
-                for (var i = 0; i < segments.Count; i++)
-                {
-                    var segment = segments[i];
-                    if (segment is IdentifierSegment identifierSegment)
-                    {
-                        if (templateName != "")
-                        {
-                            templateName += ".";
-                        }
-
-                        templateName += identifierSegment.Identifier;
-                    }
-                }
+                var templateName = ((LiteralExpression) arguments[0]).Value.ToStringValue();
 
                 var tabCount = -1;
                 if (arguments.Count > 1 && arguments[1] is LiteralExpression literalExpression)
@@ -273,7 +264,7 @@ namespace NJsonSchema.CodeGeneration
                     : (string) context.AmbientValues[TemplateKey] + "!";
 
                 var template = settings.TemplateFactory.CreateTemplate(language, templateName, context.Model);
-                var output = template.Render().Trim();
+                var output = template.Render();
 
                 if (string.IsNullOrEmpty(output))
                 {
@@ -286,7 +277,6 @@ namespace NJsonSchema.CodeGeneration
                         await writer.WriteAsync("    ");
                     }
                     await writer.WriteAsync(ConversionUtilities.Tab(output, tabCount));
-                    await writer.WriteAsync("\r\n");
                 }
                 else
                 {

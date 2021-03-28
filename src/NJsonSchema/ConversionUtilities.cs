@@ -6,6 +6,8 @@
 // <author>Rico Suter, mail@rsuter.com</author>
 //-----------------------------------------------------------------------
 
+using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Xml.Linq;
@@ -185,7 +187,34 @@ namespace NJsonSchema
         /// <returns>The output.</returns>
         public static string Tab(string input, int tabCount)
         {
-            return input?.Replace("\n", "\n" + string.Join("", Enumerable.Repeat("    ", tabCount))) ?? string.Empty;
+            if (input is null)
+            {
+                return "";
+            }
+            var tabString = CreateTabString(tabCount);
+            return AddPrefixToBeginningOfNonEmptyLines(input, tabString);
+        }
+
+        private static string AddPrefixToBeginningOfNonEmptyLines(string input, string tabString)
+        {
+            if (tabString.Length == 0)
+            {
+                return input;
+            }
+            
+            var stringWriter = new StringWriter(new StringBuilder(input.Length), CultureInfo.CurrentCulture);
+            for (var i = 0; i < input.Length; i++)
+            {
+                var c = input[i];
+                stringWriter.Write(c);
+                if (c == '\n' && i + 1 < input.Length && input[i + 1] != '\n')
+                {
+                    // only write if not entirely empty line
+                    stringWriter.Write(tabString);
+                }
+            }
+
+            return stringWriter.ToString();
         }
 
         /// <summary>Converts all line breaks in a string into '\n' and removes white spaces.</summary>
@@ -194,12 +223,38 @@ namespace NJsonSchema
         /// <returns>The output.</returns>
         public static string ConvertCSharpDocs(string input, int tabCount)
         {
-            input = input?
-                        .Replace("\r", string.Empty)
-                        .Replace("\n", "\n" + string.Join("", Enumerable.Repeat("    ", tabCount)) + "/// ")
-                    ?? string.Empty;
+            if (input is null)
+            {
+                return "";
+            }
+            var tabString = CreateTabString(tabCount);
+            input = input
+                .Replace("\r", string.Empty);
+
+            input = AddPrefixToBeginningOfNonEmptyLines(input, tabString + "/// ");
 
             return new XText(input).ToString();
+        }
+
+        private static string CreateTabString(int tabCount)
+        {
+            if (tabCount == 0)
+            {
+                return "";
+            }
+
+            if (tabCount == 1)
+            {
+                return "    ";
+            }
+
+            if (tabCount == 2)
+            {
+                return "        ";
+            }
+
+            var tabString = new string(' ', 4 * tabCount);
+            return tabString;
         }
 
         private static string ConvertDashesToCamelCase(string input)
