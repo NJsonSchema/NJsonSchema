@@ -153,6 +153,8 @@ namespace NJsonSchema.CodeGeneration
 
             public string Render()
             {
+                var childScope = false;
+                TemplateContext templateContext = null;
                 try
                 {
                     // use language and template name as key for faster lookup than using the content
@@ -164,7 +166,7 @@ namespace NJsonSchema.CodeGeneration
                         data = "\n" + data;
 
                         // tab count parameters to template based on surrounding code, how many spaces before the template tag
-                        data = Regex.Replace(data, "(\\s*)?\\{%(-)?\\s+template\\s+([a-zA-Z0-9_.]+)(\\s*?.*?)\\s(-)?%}", 
+                        data = Regex.Replace(data, "(\\s*)?\\{%(-)?\\s+template\\s+([a-zA-Z0-9_.]+)(\\s*?.*?)\\s(-)?%}",
                             m =>
                             {
                                 var whitespace = m.Groups[1].Value;
@@ -179,13 +181,13 @@ namespace NJsonSchema.CodeGeneration
                                     var tabCount = whitespace.TrimStart('\n').Length / 4;
                                     rewritten += tabCount + " ";
                                 }
-                                 
-                                rewritten += m.Groups[5].Value + "%}"; 
-                                
+
+                                rewritten += m.Groups[5].Value + "%}";
+
                                 return rewritten;
                             },
                             RegexOptions.Singleline);
-                        
+
                         data = Regex.Replace(data, "(\n( )*)([^\n]*?) \\| csharpdocs }}", m =>
                             m.Groups[1].Value + m.Groups[3].Value + " | csharpdocs: " + m.Groups[1].Value.Length / 4 + " }}",
                             RegexOptions.Singleline);
@@ -197,17 +199,37 @@ namespace NJsonSchema.CodeGeneration
                         return _parser.Parse(data);
                     });
 
-                    var templateContext = new TemplateContext(_model, _templateOptions);
-                    templateContext.AmbientValues.Add(LiquidParser.LanguageKey, _language);
-                    templateContext.AmbientValues.Add(LiquidParser.TemplateKey, _template);
-                    templateContext.AmbientValues.Add(LiquidParser.SettingsKey, _settings);
-                    templateContext.AmbientValues.Add("ToolchainVersion", _toolchainVersion);
+                    if (_model is TemplateContext outerContext)
+                    {
+                        // we came from template call
+                        templateContext = outerContext;
+                        templateContext.EnterChildScope();
+                        childScope = true;
+                    }
+                    else
+                    {
+                        templateContext = new TemplateContext(_model, _templateOptions);
+                        templateContext.AmbientValues.Add(LiquidParser.SettingsKey, _settings);
+                        templateContext.AmbientValues.Add("ToolchainVersion", _toolchainVersion);
+                    }
+
+                    templateContext.AmbientValues[LiquidParser.LanguageKey] = _language;
+                    templateContext.AmbientValues[LiquidParser.TemplateKey] = _template;
+
                     var render = template.Render(templateContext);
                     return render.Replace("\r", "").Trim('\n');
                 }
                 catch (Exception exception)
                 {
-                    throw new InvalidOperationException($"Error while rendering Liquid template {_language}/{_template}: \n" + exception, exception);
+                    throw new InvalidOperationException(
+                        $"Error while rendering Liquid template {_language}/{_template}: \n" + exception, exception);
+                }
+                finally
+                {
+                    if (childScope)
+                    {
+                        templateContext.ReleaseScope();
+                    }
                 }
             }
         }
@@ -280,7 +302,7 @@ namespace NJsonSchema.CodeGeneration
                     ? templateName
                     : (string) context.AmbientValues[TemplateKey] + "!";
 
-                var template = settings.TemplateFactory.CreateTemplate(language, templateName, context.Model);
+                var template = settings.TemplateFactory.CreateTemplate(language, templateName, context);
                 var output = template.Render();
 
                 if (string.IsNullOrEmpty(output))
