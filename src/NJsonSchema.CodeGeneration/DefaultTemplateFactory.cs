@@ -157,18 +157,35 @@ namespace NJsonSchema.CodeGeneration
                 {
                     // use language and template name as key for faster lookup than using the content
                     var key = (_language, _template);
-                    var template = Templates.GetOrAdd(key, _ => 
+                    var template = Templates.GetOrAdd(key, _ =>
                     {
-                        // make te parameter a string literal as it's more valid and faster to process
-                        var data = Regex.Replace(_data, @"\{%\s+template\s+([a-zA-Z0-9_.]+)(\s*?.*?)\s%}", 
-                            m => "{% " + TemplateTagName + " '" + (m.Groups[1].Value + "' " + m.Groups[2].Value).TrimEnd() + " %}",
+                        // our matching expects unix new lines
+                        var data = _data.Replace("\r", "");
+                        data = "\n" + data;
+
+                        // tab count parameters to template based on surrounding code, how many spaces before the template tag
+                        data = Regex.Replace(data, "(\\s*)?\\{%(-)?\\s+template\\s+([a-zA-Z0-9_.]+)(\\s*?.*?)\\s(-)?%}", 
+                            m =>
+                            {
+                                var whitespace = m.Groups[1].Value;
+
+                                var rewritten = whitespace + "{%" + m.Groups[2].Value + " " + TemplateTagName;
+                                // make te parameter a string literal as it's more valid and faster to process
+                                rewritten += " '" + m.Groups[3].Value + "' ";
+
+                                if (whitespace.Length > 0 && whitespace[0] == '\n')
+                                {
+                                    // we can checks how many spaces
+                                    var tabCount = whitespace.TrimStart('\n').Length / 4;
+                                    rewritten += tabCount + " ";
+                                }
+                                 
+                                rewritten += m.Groups[5].Value + "%}"; 
+                                
+                                return rewritten;
+                            },
                             RegexOptions.Singleline);
                         
-                        // tab count parameters to template based on surrounding code, how many spaces before the template tag
-                        data = Regex.Replace("\n" + data, "(\n( )*?)\\{% template (.*?) %}", m =>
-                                "\n{%- template " + m.Groups[3].Value + " " + m.Groups[1].Value.Length / 4 + " %}",
-                            RegexOptions.Singleline).Trim();
-
                         data = Regex.Replace(data, "(\n( )*)([^\n]*?) \\| csharpdocs }}", m =>
                             m.Groups[1].Value + m.Groups[3].Value + " | csharpdocs: " + m.Groups[1].Value.Length / 4 + " }}",
                             RegexOptions.Singleline);
@@ -186,7 +203,7 @@ namespace NJsonSchema.CodeGeneration
                     templateContext.AmbientValues.Add(LiquidParser.SettingsKey, _settings);
                     templateContext.AmbientValues.Add("ToolchainVersion", _toolchainVersion);
                     var render = template.Render(templateContext);
-                    return render.Replace("\r", "").Trim();
+                    return render.Replace("\r", "").Trim('\n');
                 }
                 catch (Exception exception)
                 {
@@ -270,12 +287,8 @@ namespace NJsonSchema.CodeGeneration
                 {
                     await writer.WriteAsync(string.Empty);
                 }
-                else if (tabCount >= 0)
+                else if (tabCount > 0)
                 {
-                    for (var i = 0; i < tabCount; ++i)
-                    {
-                        await writer.WriteAsync("    ");
-                    }
                     await writer.WriteAsync(ConversionUtilities.Tab(output, tabCount));
                 }
                 else
