@@ -53,13 +53,14 @@ namespace NJsonSchema.CodeGeneration
 
             RegisterSchemaDefinitions(schema.Definitions);
 
-            if (!_generatedTypeNames.ContainsKey(schema))
+            if (!_generatedTypeNames.TryGetValue(schema, out var typeNames))
             {
-                var reservedTypeNames = _generatedTypeNames.Values.Distinct().ToList();
-                _generatedTypeNames[schema] = _settings.TypeNameGenerator.Generate(schema, typeNameHint, reservedTypeNames);
+                var reservedTypeNames = new HashSet<string>(_generatedTypeNames.Values);
+                typeNames = _settings.TypeNameGenerator.Generate(schema, typeNameHint, reservedTypeNames);
+                _generatedTypeNames[schema] = typeNames;
             }
 
-            return _generatedTypeNames[schema];
+            return typeNames;
         }
 
         /// <summary>Adds all schemas to the resolver.</summary>
@@ -89,7 +90,7 @@ namespace NJsonSchema.CodeGeneration
             return schema.OneOf.FirstOrDefault(o => !o.IsNullable(SchemaType.JsonSchema)) ?? schema;
         }
 
-        /// <summary>Gets the actual schema (i.e. when not referencing a type schema or it is inlined) 
+        /// <summary>Gets the actual schema (i.e. when not referencing a type schema or it is inlined)
         /// and removes a nullable oneOf reference if available.</summary>
         /// <param name="schema">The schema.</param>
         /// <returns>The actually resolvable schema</returns>
@@ -99,7 +100,7 @@ namespace NJsonSchema.CodeGeneration
             return IsDefinitionTypeSchema(schema.ActualSchema) ? schema : schema.ActualSchema;
         }
 
-        /// <summary>Checks whether the given schema generates a new type (e.g. class, enum, class with dictionary inheritance, etc.) 
+        /// <summary>Checks whether the given schema generates a new type (e.g. class, enum, class with dictionary inheritance, etc.)
         /// or is an inline type (e.g. string, number, etc.). Warning: Enum will also return true.</summary>
         /// <param name="schema"></param>
         /// <returns></returns>
