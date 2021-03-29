@@ -46,8 +46,13 @@ namespace NJsonSchema.CodeGeneration
         /// <exception cref="InvalidOperationException">Could not load template.</exception>
         public ITemplate CreateTemplate(string language, string template, object model)
         {
-            var liquidTemplate = GetLiquidTemplate(language, template);
-            return new LiquidTemplate(language, template, liquidTemplate, model, GetToolchainVersion(), _settings);
+            return new LiquidTemplate(
+                language,
+                template,
+                (lang, name) => GetLiquidTemplate(lang, name),
+                model,
+                GetToolchainVersion(),
+                _settings);
         }
 
         /// <summary>Gets the current toolchain version.</summary>
@@ -133,7 +138,7 @@ namespace NJsonSchema.CodeGeneration
 
             private readonly string _language;
             private readonly string _template;
-            private readonly string _data;
+            private Func<string, string, string> _templateContentLoader;
             private readonly object _model;
             private readonly string _toolchainVersion;
             private readonly CodeGeneratorSettingsBase _settings;
@@ -141,11 +146,17 @@ namespace NJsonSchema.CodeGeneration
             private static readonly LiquidParser _parser;
             private static readonly TemplateOptions _templateOptions;
 
-            public LiquidTemplate(string language, string template, string data, object model, string toolchainVersion, CodeGeneratorSettingsBase settings)
+            public LiquidTemplate(
+                string language,
+                string template,
+                Func<string, string, string> templateContentLoader,
+                object model,
+                string toolchainVersion,
+                CodeGeneratorSettingsBase settings)
             {
                 _language = language;
                 _template = template;
-                _data = data;
+                _templateContentLoader = templateContentLoader;
                 _model = model;
                 _toolchainVersion = toolchainVersion;
                 _settings = settings;
@@ -162,7 +173,7 @@ namespace NJsonSchema.CodeGeneration
                     var template = Templates.GetOrAdd(key, _ =>
                     {
                         // our matching expects unix new lines
-                        var data = _data.Replace("\r", "");
+                        var data = _templateContentLoader(_language, _template).Replace("\r", "");
                         data = "\n" + data;
 
                         // tab count parameters to template based on surrounding code, how many spaces before the template tag
@@ -281,10 +292,10 @@ namespace NJsonSchema.CodeGeneration
             {
                 RegisterParserTag(LiquidTemplate.TemplateTagName, Parsers.OneOrMany(Primary), RenderTemplate);
             }
-            
+
             private static ValueTask<Completion> RenderTemplate(
                 List<Expression> arguments,
-                TextWriter writer, 
+                TextWriter writer,
                 TextEncoder encoder,
                 TemplateContext context)
             {
@@ -321,14 +332,14 @@ namespace NJsonSchema.CodeGeneration
                 return new ValueTask<Completion>(Completion.Normal);
             }
         }
-       
+
         /// <summary>
         /// Version that allows all access, safe as models are handled by NJsonSchema.
         /// </summary>
         private sealed class UnsafeMemberAccessStrategy : DefaultMemberAccessStrategy
         {
             private readonly MemberAccessStrategy baseMemberAccessStrategy = new DefaultMemberAccessStrategy();
-            
+
             public override IMemberAccessor GetAccessor(Type type, string name)
             {
                 var accessor = baseMemberAccessStrategy.GetAccessor(type, name);
