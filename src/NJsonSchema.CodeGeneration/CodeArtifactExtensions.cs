@@ -28,7 +28,10 @@ namespace NJsonSchema.CodeGeneration
         public static IEnumerable<CodeArtifact> OrderByBaseDependency(this IEnumerable<CodeArtifact> results)
         {
             var newResults = new List<CodeArtifact>(results);
-            foreach (var result in newResults.ToArray())
+
+            // we need new list to iterate as we modify the original
+            var resultIterator = results as List<CodeArtifact> ?? newResults.ToList();
+            foreach (var result in resultIterator)
             {
                 if (!string.IsNullOrEmpty(GetActualBaseName(result.BaseTypeName)))
                 {
@@ -36,14 +39,20 @@ namespace NJsonSchema.CodeGeneration
                     var baseResult = result;
                     do
                     {
-                        baseResult = newResults.SingleOrDefault(r => r.TypeName == GetActualBaseName(baseResult.BaseTypeName));
-                        if (baseResult != null)
+                        var actualBaseName = GetActualBaseName(baseResult.BaseTypeName);
+                        baseResult = null;
+                        for (var baseIndex = 0; baseIndex < newResults.Count; baseIndex++)
                         {
-                            var baseIndex = newResults.IndexOf(baseResult);
-                            if (baseIndex > index)
+                            var candidate = newResults[baseIndex];
+                            if (candidate.TypeName == actualBaseName)
                             {
-                                newResults.RemoveAt(baseIndex);
-                                newResults.Insert(index, baseResult);
+                                baseResult = candidate;
+                                if (baseIndex > index)
+                                {
+                                    newResults.RemoveAt(baseIndex);
+                                    newResults.Insert(index, candidate);
+                                }
+                                break;
                             }
                         }
                     } while (baseResult != null);
@@ -66,7 +75,12 @@ namespace NJsonSchema.CodeGeneration
             }
 
             // resolve lists
-            return Regex.Replace(baseTypeName, ".*\\<(.*)\\>", m => m.Groups[1].Value);
+            if (baseTypeName.IndexOf('<') > -1)
+            {
+                return Regex.Replace(baseTypeName, ".*\\<(.*)\\>", m => m.Groups[1].Value);
+            }
+
+            return baseTypeName;
         }
     }
 }
