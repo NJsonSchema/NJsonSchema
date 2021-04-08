@@ -22,3 +22,4 @@ src/packages/Newtonsoft.Json**
 /src/TestResults
 /src/.cr/*
 /src/NJsonSchema.Benchmark/BenchmarkDotNet.Artifacts*
+_ReSharper.Caches

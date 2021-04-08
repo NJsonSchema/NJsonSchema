@@ -31,11 +31,15 @@ namespace NJsonSchema.Generation
 
             var nType = type.ToCachedType();
 
+#if !NET40
             if (nType.Type.IsConstructedGenericType)
+#else
+            if (nType.Type.IsGenericType)
+#endif
             {
-                return GetName(nType).Split('`').First() + "Of" + 
+                return GetName(nType).Split('`').First() + "Of" +
                        string.Join("And", nType.GenericArguments
-                                               .Select(a => Generate(a.OriginalType)));
+                           .Select(a => Generate(a.OriginalType)));
             }
 
             return GetName(nType);

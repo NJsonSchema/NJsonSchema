@@ -2,14 +2,13 @@
 
   <PropertyGroup>
     <TargetFrameworks>net5.0;net461</TargetFrameworks>
-
     <IsPackable>false</IsPackable>
-      <LangVersion>8</LangVersion>
+    <LangVersion>8</LangVersion>
   </PropertyGroup>
 
   <PropertyGroup>
     <DocumentationFile>bin\Debug\$(TargetFramework)\NJsonSchema.Tests.xml</DocumentationFile>
-    <NoWarn>1998,1591</NoWarn>
+    <NoWarn>$(NoWarn),618,1587,1998,1591</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>

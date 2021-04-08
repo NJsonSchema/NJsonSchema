@@ -185,7 +185,7 @@ namespace NJsonSchema.Generation
             ApplySchemaProcessors(schema, contextualType, schemaResolver);
         }
 
-        /// <summary>Generetes a schema directly or referenced for the requested schema type; 
+        /// <summary>Generetes a schema directly or referenced for the requested schema type;
         /// does NOT change nullability.</summary>
         /// <typeparam name="TSchemaType">The resulted schema type which may reference the actual schema.</typeparam>
         /// <param name="contextualType">The type of the schema to generate.</param>
@@ -201,7 +201,7 @@ namespace NJsonSchema.Generation
             return GenerateWithReferenceAndNullability(contextualType, false, schemaResolver, transformation);
         }
 
-        /// <summary>Generetes a schema directly or referenced for the requested schema type; 
+        /// <summary>Generetes a schema directly or referenced for the requested schema type;
         /// also adds nullability if required by looking at the type's <see cref="JsonTypeDescription" />.</summary>
         /// <typeparam name="TSchemaType">The resulted schema type which may reference the actual schema.</typeparam>
         /// <param name="contextualType">The type of the schema to generate.</param>
@@ -356,7 +356,7 @@ namespace NJsonSchema.Generation
             {
                 // GetName returns null if the Name property on the attribute is not specified.
                 var name = displayAttribute.GetName();
-                if (name != null) 
+                if (name != null)
                 {
                     schema.Title = name;
                 }
@@ -583,7 +583,7 @@ namespace NJsonSchema.Generation
             typeDescription.ApplyType(schema);
 
             var jsonSchemaAttribute = contextualType.GetTypeAttribute<JsonSchemaAttribute>();
-            var itemType = jsonSchemaAttribute?.ArrayItem.ToContextualType() ?? 
+            var itemType = jsonSchemaAttribute?.ArrayItem.ToContextualType() ??
                            contextualType.EnumerableItemType ??
                            contextualType.GenericArguments.FirstOrDefault();
 
@@ -913,7 +913,7 @@ namespace NJsonSchema.Generation
             }
             else
             {
-                // TODO: Remove this hacky code (used to support serialization of exceptions and restore the old behavior [pre 9.x]) 
+                // TODO: Remove this hacky code (used to support serialization of exceptions and restore the old behavior [pre 9.x])
                 foreach (var memberInfo in contextualMembers.Where(m => allowedProperties == null || allowedProperties.Contains(m.Name)))
                 {
                     var attribute = memberInfo.GetContextAttribute<JsonPropertyAttribute>();
@@ -1053,7 +1053,7 @@ namespace NJsonSchema.Generation
 
                         if (actualSchema.Properties.Any() || requiresSchemaReference)
                         {
-                            // Use allOf inheritance only if the schema is an object with properties 
+                            // Use allOf inheritance only if the schema is an object with properties
                             // (not empty class which just inherits from array or dictionary)
 
                             var baseSchema = Generate(baseType, schemaResolver);
@@ -1120,7 +1120,7 @@ namespace NJsonSchema.Generation
                 {
                     var discriminatorName = TryGetInheritanceDiscriminatorName(discriminatorConverter);
 
-                    // Existing property can be discriminator only if it has String type  
+                    // Existing property can be discriminator only if it has String type
                     if (typeSchema.Properties.TryGetValue(discriminatorName, out var existingProperty))
                     {
                         if (!existingProperty.ActualTypeSchema.Type.HasFlag(JsonObjectType.Integer) &&
@@ -1168,8 +1168,8 @@ namespace NJsonSchema.Generation
                 if (converterType.IsAssignableToTypeName(nameof(JsonInheritanceConverter), TypeNameStyle.Name) || // Newtonsoft's converter
                     converterType.IsAssignableToTypeName(nameof(JsonInheritanceConverter) + "`1", TypeNameStyle.Name)) // System.Text.Json's converter
                 {
-                    return ObjectExtensions.HasProperty(jsonConverterAttribute, "ConverterParameters") && 
-                           jsonConverterAttribute.ConverterParameters != null && 
+                    return ObjectExtensions.HasProperty(jsonConverterAttribute, "ConverterParameters") &&
+                           jsonConverterAttribute.ConverterParameters != null &&
                            jsonConverterAttribute.ConverterParameters.Length > 0 ?
                         Activator.CreateInstance(jsonConverterAttribute.ConverterType, jsonConverterAttribute.ConverterParameters) :
                         Activator.CreateInstance(jsonConverterAttribute.ConverterType);
@@ -1384,8 +1384,15 @@ namespace NJsonSchema.Generation
 
         private void ApplyTypeExtensionDataAttributes<TSchemaType>(TSchemaType schema, ContextualType contextualType) where TSchemaType : JsonSchema, new()
         {
-            var extensionAttributes = contextualType.OriginalType.GetTypeInfo().GetCustomAttributes().Where(attribute => 
+            Attribute[] extensionAttributes;
+
+#if NETSTANDARD1_0
+            extensionAttributes = contextualType.OriginalType.GetTypeInfo().GetCustomAttributes().Where(attribute =>
+                attribute.GetType().GetTypeInfo().ImplementedInterfaces.Contains(typeof(IJsonSchemaExtensionDataAttribute))).ToArray();
+#else
+            extensionAttributes = contextualType.OriginalType.GetTypeInfo().GetCustomAttributes().Where(attribute =>
                 typeof(IJsonSchemaExtensionDataAttribute).IsAssignableFrom(attribute.GetType())).ToArray();
+#endif
 
             if (extensionAttributes.Any())
             {

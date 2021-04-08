@@ -138,7 +138,7 @@ namespace NJsonSchema.CodeGeneration
 
             private readonly string _language;
             private readonly string _template;
-            private Func<string, string, string> _templateContentLoader;
+            private readonly Func<string, string, string> _templateContentLoader;
             private readonly object _model;
             private readonly string _toolchainVersion;
             private readonly CodeGeneratorSettingsBase _settings;
