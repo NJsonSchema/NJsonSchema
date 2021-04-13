@@ -190,7 +190,7 @@ namespace NJsonSchema
                     (_schemaAppender.RootObject as JsonSchema)?.Definitions.Values.Contains(referencedFile) != true)
                 {
                     var key = jsonPath.Split('/', '\\').Last().Split('.').First();
-                    _schemaAppender.AppendSchema((JsonSchema)resolvedSchema, key);
+                    _schemaAppender.AppendSchema((JsonSchema)resolvedSchema, key, null);
                 }
 
                 return resolvedSchema;
@@ -212,7 +212,7 @@ namespace NJsonSchema
                     schema.DocumentPath = arr[0];
                     if (schema is JsonSchema && append)
                     {
-                        _schemaAppender.AppendSchema((JsonSchema)schema, null);
+                        _schemaAppender.AppendSchema((JsonSchema)schema, null, null);
                     }
 
                     _resolvedObjects[arr[0]] = schema;
