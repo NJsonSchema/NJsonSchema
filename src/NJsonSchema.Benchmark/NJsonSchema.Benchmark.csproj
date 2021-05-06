@@ -2,6 +2,7 @@
   <PropertyGroup>
     <TargetFramework>net5.0</TargetFramework>
     <GenerateProgramFile>false</GenerateProgramFile>
+    <NoWarn>$(NoWarn),xUnit1013</NoWarn>
   </PropertyGroup>
   <ItemGroup>
     <EmbeddedResource Include="*.json" />

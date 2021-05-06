@@ -38,7 +38,7 @@ namespace NJsonSchema.Tests.Validation
             Assert.Equal(0, errors.Count);
         }
 
-        // [Fact]
+        [Fact(Skip = "Ignored")]
         public async Task When_integer_is_big_integer_then_validation_works()
         {
             // See https://github.com/RicoSuter/NJsonSchema/issues/568

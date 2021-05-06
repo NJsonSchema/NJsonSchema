@@ -2,10 +2,11 @@
   <PropertyGroup>
     <TargetFrameworks>net5.0;net461</TargetFrameworks>
     <IsPackable>false</IsPackable>
+    <NoWarn>$(NoWarn),1587,1998,1591,618</NoWarn>
   </PropertyGroup>
   <PropertyGroup>
       <DocumentationFile>bin\Debug\$(TargetFramework)\NJsonSchema.Yaml.Tests.xml</DocumentationFile>
-  </PropertyGroup>  
+  </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.3.0" />
     <PackageReference Include="NSwag.Core.Yaml" Version="13.10.2" />
@@ -35,7 +36,7 @@
     </Content>
     <Content Include="References\YamlReferencesTest\json_schema_with_yaml_reference.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>  
+    </Content>
     <Content Include="References\YamlReferencesTest\json_schema_with_json_reference.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>

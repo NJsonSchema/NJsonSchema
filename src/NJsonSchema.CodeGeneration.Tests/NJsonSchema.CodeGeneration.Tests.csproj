@@ -4,7 +4,7 @@
         <SignAssembly>True</SignAssembly>
         <AssemblyOriginatorKeyFile>../NJsonSchema.snk</AssemblyOriginatorKeyFile>
         <IsPackable>false</IsPackable>
-        <NoWarn>1998,1591</NoWarn>
+        <NoWarn>$(NoWarn),1998,1591,618</NoWarn>
     </PropertyGroup>
     <ItemGroup>
         <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.3.0" />
