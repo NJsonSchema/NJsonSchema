@@ -1,9 +1,9 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>netcoreapp5.0;net452</TargetFrameworks>
+    <TargetFrameworks>net5.0;net461</TargetFrameworks>
     <IsPackable>false</IsPackable>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <NoWarn>1998,1591</NoWarn>
+    <NoWarn>$(NoWarn),1587,1998,1591,618</NoWarn>
   </PropertyGroup>
   <ItemGroup>
     <None Remove="References\A.json" />
@@ -38,12 +38,12 @@
     <PackageReference Include="xunit" Version="2.3.1" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.3.1" />
 
-    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="3.8.0" Condition="'$(TargetFramework)' == 'netcoreapp5.0'" />
-    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="1.3.2" Condition="'$(TargetFramework)' == 'net452'" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="3.8.0" Condition="'$(TargetFramework)' == 'net5.0'" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="1.3.2" Condition="'$(TargetFramework)' == 'net461'" />
 
     <DotNetCliToolReference Include="dotnet-xunit" Version="2.3.1" />
-    <PackageReference Condition="'$(TargetFramework)' == 'netcoreapp5.0'" Include="System.ComponentModel.Annotations" Version="4.4.0" />
-    <Reference Condition="'$(TargetFramework)' == 'net452'" Include="System.ComponentModel.DataAnnotations">
+    <PackageReference Condition="'$(TargetFramework)' == 'net5.0'" Include="System.ComponentModel.Annotations" Version="4.4.0" />
+    <Reference Condition="'$(TargetFramework)' == 'net461'" Include="System.ComponentModel.DataAnnotations">
     </Reference>
   </ItemGroup>
   <ItemGroup>

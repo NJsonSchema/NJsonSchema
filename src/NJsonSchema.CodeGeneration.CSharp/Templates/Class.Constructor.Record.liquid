@@ -1,25 +1,25 @@
-﻿{% assign skipComma = true -%}
+﻿{%- assign skipComma = true %}
 {% if HasInheritance %}
-{% assign parentProperties = BaseClass.AllProperties -%}
+{%- assign parentProperties = BaseClass.AllProperties %}
 {% else %}
-{% assign parentProperties = "" | empty -%}
+{%- assign parentProperties = "" | empty %}
 {% endif %}
 
-{% assign sortedProperties = AllProperties | sort: "Name" -%}
-{% assign sortedParentProperties = parentProperties | sort: "Name" -%}
+{%- assign sortedProperties = AllProperties | sort: "Name" %}
+{%- assign sortedParentProperties = parentProperties | sort: "Name" %}
 
-{% if UseSystemTextJson -%}
+{%- if UseSystemTextJson %}
 [System.Text.Json.Serialization.JsonConstructor]
-{% else -%}
+{%- else %}
 [Newtonsoft.Json.JsonConstructor]
-{% endif -%}
-{% if IsAbstract %}protected{% else %}public{% endif %} {{ClassName}}({% for property in sortedProperties -%}{% if skipComma -%}{% assign skipComma = false %}{% else %}, {% endif -%} {{ property.Type }} @{{ property.Name | lowercamelcase }}{% endfor -%})
-{% assign skipComma = true -%}
-{% if HasInheritance -%}
-    : base({% for property in sortedParentProperties -%}{% if skipComma -%}{% assign skipComma = false %}{% else %}, {% endif -%}{{ property.Name | lowercamelcase }}{% endfor -%})
-{% endif -%}
+{%- endif %}
+{% if IsAbstract %}protected{% else %}public{% endif %} {{ClassName}}({% for property in sortedProperties %}{%- if skipComma %}{%- assign skipComma = false %}{% else %}, {% endif %}{{ property.Type }} @{{ property.Name | lowercamelcase }}{% endfor %})
+{%- assign skipComma = true %}
+{%- if HasInheritance %}
+    : base({%- for property in sortedParentProperties %}{%- if skipComma %}{%- assign skipComma = false %}{% else %}, {% endif %}{{ property.Name | lowercamelcase }}{%- endfor %})
+{%- endif %}
 {
-{% for property in Properties -%}
+{%- for property in Properties %}
     this.{{property.PropertyName}} = @{{property.Name | lowercamelcase}};
-{% endfor -%}
+{%- endfor %}
 }

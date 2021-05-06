@@ -6,21 +6,21 @@
 
 {{ ExtensionCode.ImportCode }}
 
-{% if HasModuleName -%}
+{%- if HasModuleName %}
 module {{ ModuleName }} {
-{% endif -%}
-{% if HasNamespace -%}
+{%- endif %}
+{%- if HasNamespace %}
 namespace {{ Namespace }} {
-{% endif -%}
+{%- endif %}
 {{ ExtensionCode.TopCode }}
 
 {{ Types }}
 
 {{ ExtensionCode.BottomCode }}
 
-{% if HasNamespace -%}
+{%- if HasNamespace %}
 }
-{% endif -%}
-{% if HasModuleName -%}
+{%- endif %}
+{%- if HasModuleName %}
 }
-{% endif -%}
+{%- endif %}

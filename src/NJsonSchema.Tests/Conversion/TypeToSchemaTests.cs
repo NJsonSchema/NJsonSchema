@@ -19,7 +19,7 @@ namespace NJsonSchema.Tests.Conversion
             //// Arrange
             var schema = JsonSchema.FromType<MyType>();
 
-            //// Act
+            /// Act
             var schemaData1 = JsonConvert.SerializeObject(schema, Formatting.Indented);
             var schema2 = JsonConvert.DeserializeObject<JsonSchema>(schemaData1);
             var schemaData2 = JsonConvert.SerializeObject(schema2, Formatting.Indented);

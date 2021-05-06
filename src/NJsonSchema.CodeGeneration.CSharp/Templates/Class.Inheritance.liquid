@@ -1,7 +1,7 @@
-﻿{% if RenderInpc -%}
-{% if HasInheritance %}: {{ BaseClassName }}{% else %}: System.ComponentModel.INotifyPropertyChanged{% endif %}
-{% elsif RenderPrism -%}
-{% if HasInheritance %}: {{ BaseClassName }}{% else %}: Prism.Mvvm.BindableBase{% endif %}
-{% else -%}
-{% if HasInheritance %}: {{ BaseClassName }}{% endif %}
-{% endif -%}
+﻿{%- if RenderInpc %}
+{% if HasInheritance %} : {{ BaseClassName }}{% else %} : System.ComponentModel.INotifyPropertyChanged{% endif %}
+{%- elsif RenderPrism %}
+{% if HasInheritance %} : {{ BaseClassName }}{% else %} : Prism.Mvvm.BindableBase{% endif %}
+{%- else %}
+{% if HasInheritance %} : {{ BaseClassName }}{% endif %}
+{%- endif %}

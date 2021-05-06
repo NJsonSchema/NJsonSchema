@@ -6,7 +6,6 @@
 // <author>Rico Suter, mail@rsuter.com</author>
 //-----------------------------------------------------------------------
 
-using DotLiquid;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -14,7 +13,13 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Text.Encodings.Web;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
+using Fluid;
+using Fluid.Ast;
+using Fluid.Values;
+using Parlot.Fluent;
 
 namespace NJsonSchema.CodeGeneration
 {
@@ -41,8 +46,13 @@ namespace NJsonSchema.CodeGeneration
         /// <exception cref="InvalidOperationException">Could not load template.</exception>
         public ITemplate CreateTemplate(string language, string template, object model)
         {
-            var liquidTemplate = GetLiquidTemplate(language, template);
-            return new LiquidTemplate(language, template, liquidTemplate, model, GetToolchainVersion(), _settings);
+            return new LiquidTemplate(
+                language,
+                template,
+                (lang, name) => GetLiquidTemplate(lang, name),
+                model,
+                GetToolchainVersion(),
+                _settings);
         }
 
         /// <summary>Gets the current toolchain version.</summary>
@@ -105,28 +115,48 @@ namespace NJsonSchema.CodeGeneration
             return GetEmbeddedLiquidTemplate(language, template);
         }
 
-        internal class LiquidTemplate : ITemplate
+        private sealed class LiquidTemplate : ITemplate
         {
-            private const string TemplateTagName = "__njs_template";
-            private static readonly ConcurrentDictionary<string, string> Templates = new ConcurrentDictionary<string, string>();
+            internal const string TemplateTagName = "template";
+            private static readonly ConcurrentDictionary<(string, string), IFluidTemplate> Templates = new ConcurrentDictionary<(string, string), IFluidTemplate>();
 
             static LiquidTemplate()
             {
-                Template.RegisterTag<TemplateTag>(TemplateTagName);
+                // thread-safe
+                _parser = new LiquidParser();
+                _templateOptions = new TemplateOptions
+                {
+                    MemberAccessStrategy = new UnsafeMemberAccessStrategy(),
+                    CultureInfo = CultureInfo.InvariantCulture
+                };
+                _templateOptions.Filters.AddFilter("csharpdocs", LiquidFilters.Csharpdocs);
+                _templateOptions.Filters.AddFilter("tab", LiquidFilters.Tab);
+                _templateOptions.Filters.AddFilter("lowercamelcase", LiquidFilters.Lowercamelcase);
+                _templateOptions.Filters.AddFilter("uppercamelcase", LiquidFilters.Uppercamelcase);
+                _templateOptions.Filters.AddFilter("literal", LiquidFilters.Literal);
             }
 
             private readonly string _language;
             private readonly string _template;
-            private readonly string _data;
+            private readonly Func<string, string, string> _templateContentLoader;
             private readonly object _model;
             private readonly string _toolchainVersion;
             private readonly CodeGeneratorSettingsBase _settings;
 
-            public LiquidTemplate(string language, string template, string data, object model, string toolchainVersion, CodeGeneratorSettingsBase settings)
+            private static readonly LiquidParser _parser;
+            private static readonly TemplateOptions _templateOptions;
+
+            public LiquidTemplate(
+                string language,
+                string template,
+                Func<string, string, string> templateContentLoader,
+                object model,
+                string toolchainVersion,
+                CodeGeneratorSettingsBase settings)
             {
                 _language = language;
                 _template = template;
-                _data = data;
+                _templateContentLoader = templateContentLoader;
                 _model = model;
                 _toolchainVersion = toolchainVersion;
                 _settings = settings;
@@ -134,25 +164,40 @@ namespace NJsonSchema.CodeGeneration
 
             public string Render()
             {
+                var childScope = false;
+                TemplateContext templateContext = null;
                 try
                 {
-                    var hash = _model is Hash ? (Hash)_model : new LiquidProxyHash(_model);
-                    hash[TemplateTag.LanguageKey] = _language;
-                    hash[TemplateTag.TemplateKey] = _template;
-                    hash[TemplateTag.SettingsKey] = _settings;
-                    hash["ToolchainVersion"] = _toolchainVersion;
-
-                    if (!Templates.ContainsKey(_data))
+                    // use language and template name as key for faster lookup than using the content
+                    var key = (_language, _template);
+                    var template = Templates.GetOrAdd(key, _ =>
                     {
-                        var data = Regex.Replace("\n" + _data, "(\n( )*?)\\{% template (.*?) %}", m =>
-                                "\n{%- " + TemplateTagName + " " + m.Groups[3].Value + " " + m.Groups[1].Value.Length / 4 + " -%}",
-                            RegexOptions.Singleline).Trim();
+                        // our matching expects unix new lines
+                        var data = _templateContentLoader(_language, _template).Replace("\r", "");
+                        data = "\n" + data;
 
-                        data = Regex.Replace("\n" + data, "\\{% template (.*?) %}", m =>
-                                "{% " + TemplateTagName + " " + m.Groups[1].Value + " -1 %}",
-                            RegexOptions.Singleline).Trim();
+                        // tab count parameters to template based on surrounding code, how many spaces before the template tag
+                        data = Regex.Replace(data, "(\\s*)?\\{%(-)?\\s+template\\s+([a-zA-Z0-9_.]+)(\\s*?.*?)\\s(-)?%}",
+                            m =>
+                            {
+                                var whitespace = m.Groups[1].Value;
 
-                        data = data.Replace("{% template %}", "{% " + TemplateTagName + " %}");
+                                var rewritten = whitespace + "{%" + m.Groups[2].Value + " " + TemplateTagName;
+                                // make te parameter a string literal as it's more valid and faster to process
+                                rewritten += " '" + m.Groups[3].Value + "' ";
+
+                                if (whitespace.Length > 0 && whitespace[0] == '\n')
+                                {
+                                    // we can checks how many spaces
+                                    var tabCount = whitespace.TrimStart('\n').Length / 4;
+                                    rewritten += tabCount + " ";
+                                }
+
+                                rewritten += m.Groups[5].Value + "%}";
+
+                                return rewritten;
+                            },
+                            RegexOptions.Singleline);
 
                         data = Regex.Replace(data, "(\n( )*)([^\n]*?) \\| csharpdocs }}", m =>
                             m.Groups[1].Value + m.Groups[3].Value + " | csharpdocs: " + m.Groups[1].Value.Length / 4 + " }}",
@@ -162,127 +207,150 @@ namespace NJsonSchema.CodeGeneration
                             m.Groups[1].Value + m.Groups[3].Value + " | tab: " + m.Groups[1].Value.Length / 4 + " }}",
                             RegexOptions.Singleline);
 
-                        Templates[_data] = data; // TODO: How to cache thread-safe parsed template?
-                    }
+                        return _parser.Parse(data);
+                    });
 
-                    var template = Template.Parse(Templates[_data]);
-                    return template.Render(new RenderParameters(CultureInfo.InvariantCulture)
+                    if (_model is TemplateContext outerContext)
                     {
-                        LocalVariables = hash,
-                        Filters = new[] { typeof(LiquidFilters) },
-                        ErrorsOutputMode = ErrorsOutputMode.Rethrow
-                    }).Replace("\r", "").Trim();
-                }
-                catch (Exception exception)
-                {
-                    throw new InvalidOperationException($"Error while rendering Liquid template {_language}/{_template}: \n" + exception, exception);
-                }
-            }
-        }
-
-        internal static class LiquidFilters
-        {
-            public static string Csharpdocs(string input, int tabCount)
-            {
-                return ConversionUtilities.ConvertCSharpDocs(input, tabCount);
-            }
-
-            public static string Tab(Context context, string input, int tabCount)
-            {
-                return ConversionUtilities.Tab(input, tabCount);
-            }
-
-            public static string Lowercamelcase(Context context, string input, bool firstCharacterMustBeAlpha = true)
-            {
-                return ConversionUtilities.ConvertToLowerCamelCase(input, firstCharacterMustBeAlpha);
-            }
-
-            public static string Uppercamelcase(Context context, string input, bool firstCharacterMustBeAlpha = true)
-            {
-                return ConversionUtilities.ConvertToUpperCamelCase(input, firstCharacterMustBeAlpha);
-            }
-
-            public static string Literal(string input)
-            {
-                return "\"" + ConversionUtilities.ConvertToStringLiteral(input) + "\"";
-            }
-
-            public static IEnumerable<object> Concat(Context context, IEnumerable<object> input, IEnumerable<object> concat)
-            {
-                return input.Concat(concat ?? Enumerable.Empty<object>()).ToList();
-            }
-
-            public static IEnumerable<object> Empty(Context context, object input)
-            {
-                return Enumerable.Empty<object>();
-            }
-        }
-
-        internal class TemplateTag : Tag
-        {
-            public static string LanguageKey = "__language";
-            public static string TemplateKey = "__template";
-            public static string SettingsKey = "__settings";
-
-            private string _template;
-            private int _tabCount;
-
-            public override void Initialize(string tagName, string markup, List<string> tokens)
-            {
-                var parts = markup.Trim().Split(' ').Where(p => !string.IsNullOrWhiteSpace(p)).ToArray();
-                _template = parts.Length >= 1 ? parts[0] : null;
-                _tabCount = parts.Length >= 2 ? int.Parse(parts[1]) : 0;
-                base.Initialize(tagName, markup, tokens);
-            }
-
-            public override void Render(Context context, TextWriter result)
-            {
-                try
-                {
-                    var model = CreateModelWithParentContext(context);
-
-                    var rootContext = context.Environments[0];
-                    var settings = (CodeGeneratorSettingsBase)rootContext[SettingsKey];
-                    var language = (string)rootContext[LanguageKey];
-                    var templateName = !string.IsNullOrEmpty(_template) ? _template : (string)rootContext[TemplateKey] + "!";
-
-                    var template = settings.TemplateFactory.CreateTemplate(language, templateName, model);
-                    var output = template.Render().Trim();
-
-                    if (string.IsNullOrEmpty(output))
-                    {
-                        result.Write("");
-                    }
-                    else if (_tabCount >= 0)
-                    {
-                        result.Write(string.Join("", Enumerable.Repeat("    ", _tabCount)) +
-                            ConversionUtilities.Tab(output, _tabCount) + "\r\n");
+                        // we came from template call
+                        templateContext = outerContext;
+                        templateContext.EnterChildScope();
+                        childScope = true;
                     }
                     else
                     {
-                        result.Write(output);
+                        templateContext = new TemplateContext(_model, _templateOptions);
+                        templateContext.AmbientValues.Add(LiquidParser.SettingsKey, _settings);
+                        templateContext.AmbientValues.Add("ToolchainVersion", _toolchainVersion);
+                    }
+
+                    templateContext.AmbientValues[LiquidParser.LanguageKey] = _language;
+                    templateContext.AmbientValues[LiquidParser.TemplateKey] = _template;
+
+                    var render = template.Render(templateContext);
+                    return render.Replace("\r", "").Trim('\n');
+                }
+                catch (Exception exception)
+                {
+                    throw new InvalidOperationException(
+                        $"Error while rendering Liquid template {_language}/{_template}: \n" + exception, exception);
+                }
+                finally
+                {
+                    if (childScope)
+                    {
+                        templateContext.ReleaseScope();
                     }
                 }
-                catch (InvalidOperationException)
-                {
-                }
+            }
+        }
+
+        private static class LiquidFilters
+        {
+            public static ValueTask<FluidValue> Csharpdocs(FluidValue input, FilterArguments arguments, TemplateContext context)
+            {
+                var tabCount = (int) arguments.At(0).ToNumberValue();
+                var converted = ConversionUtilities.ConvertCSharpDocs(input.ToStringValue(), tabCount);
+                return new ValueTask<FluidValue>(new StringValue(converted));
             }
 
-            private LiquidProxyHash CreateModelWithParentContext(Context context)
+            public static ValueTask<FluidValue> Tab(FluidValue input, FilterArguments arguments, TemplateContext context)
             {
-                var model = new LiquidProxyHash(((LiquidProxyHash)context.Environments[0]).Object);
-                model.Merge(context.Registers);
-                foreach (var scope in Enumerable.Reverse(context.Scopes))
+                var tabCount = (int) arguments.At(0).ToNumberValue();
+                var converted = ConversionUtilities.Tab(input.ToStringValue(), tabCount);
+                return new ValueTask<FluidValue>(new StringValue(converted));
+            }
+
+            public static ValueTask<FluidValue> Lowercamelcase(FluidValue input, FilterArguments arguments, TemplateContext context)
+            {
+                var firstCharacterMustBeAlpha = arguments["firstCharacterMustBeAlpha"].ToBooleanValue();
+                var converted = ConversionUtilities.ConvertToLowerCamelCase(input.ToStringValue(), firstCharacterMustBeAlpha);
+                return new ValueTask<FluidValue>(new StringValue(converted));
+            }
+
+            public static ValueTask<FluidValue> Uppercamelcase(FluidValue input, FilterArguments arguments, TemplateContext context)
+            {
+                var firstCharacterMustBeAlpha = arguments["firstCharacterMustBeAlpha"].ToBooleanValue();
+                var converted = ConversionUtilities.ConvertToUpperCamelCase(input.ToStringValue(), firstCharacterMustBeAlpha);
+                return new ValueTask<FluidValue>(new StringValue(converted));
+            }
+
+            public static ValueTask<FluidValue> Literal(FluidValue input, FilterArguments arguments, TemplateContext context)
+            {
+                var converted = "\"" + ConversionUtilities.ConvertToStringLiteral(input.ToStringValue()) + "\"";
+                return new ValueTask<FluidValue>(new StringValue(converted, encode: false));
+            }
+        }
+
+        private sealed class LiquidParser : FluidParser
+        {
+            internal const string LanguageKey = "__language";
+            internal const string TemplateKey = "__template";
+            internal const string SettingsKey = "__settings";
+
+            public LiquidParser()
+            {
+                RegisterParserTag(LiquidTemplate.TemplateTagName, Parsers.OneOrMany(Primary), RenderTemplate);
+            }
+
+            private static ValueTask<Completion> RenderTemplate(
+                List<Expression> arguments,
+                TextWriter writer,
+                TextEncoder encoder,
+                TemplateContext context)
+            {
+                var templateName = ((LiteralExpression) arguments[0]).Value.ToStringValue();
+
+                var tabCount = -1;
+                if (arguments.Count > 1 && arguments[1] is LiteralExpression literalExpression)
                 {
-                    model.Merge(scope);
+                    tabCount = (int) literalExpression.Value.ToNumberValue();
                 }
 
-                foreach (var environment in Enumerable.Reverse(context.Environments))
+                var settings = (CodeGeneratorSettingsBase) context.AmbientValues[SettingsKey];
+                var language = (string) context.AmbientValues[LanguageKey];
+                templateName = !string.IsNullOrEmpty(templateName)
+                    ? templateName
+                    : (string) context.AmbientValues[TemplateKey] + "!";
+
+                var template = settings.TemplateFactory.CreateTemplate(language, templateName, context);
+                var output = template.Render();
+
+                if (string.IsNullOrEmpty(output))
                 {
-                    model.Merge(environment);
+                    writer.Write(string.Empty);
+                }
+                else if (tabCount > 0)
+                {
+                    ConversionUtilities.Tab(output, tabCount, writer);
+                }
+                else
+                {
+                    writer.Write(output);
                 }
 
-                return model;
+                return new ValueTask<Completion>(Completion.Normal);
+            }
+        }
+
+        /// <summary>
+        /// Version that allows all access, safe as models are handled by NJsonSchema.
+        /// </summary>
+        private sealed class UnsafeMemberAccessStrategy : DefaultMemberAccessStrategy
+        {
+            private readonly MemberAccessStrategy baseMemberAccessStrategy = new DefaultMemberAccessStrategy();
+
+            public override IMemberAccessor GetAccessor(Type type, string name)
+            {
+                var accessor = baseMemberAccessStrategy.GetAccessor(type, name);
+                if (accessor != null)
+                {
+                    return accessor;
+                }
+
+                baseMemberAccessStrategy.Register(type);
+                accessor = baseMemberAccessStrategy.GetAccessor(type, name);
+                return accessor;
             }
         }
     }

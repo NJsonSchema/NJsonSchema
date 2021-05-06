@@ -1,8 +1,8 @@
-﻿{% if HasDescription -%}
+﻿{%- if HasDescription %}
 /** {{ Description }} */
-{% endif -%}
+{%- endif %}
 {% if ExportTypes %}export {% endif %}enum {{ Name }} {
-{% for enumeration in Enums -%}
+{%- for enumeration in Enums %}
     {{ enumeration.Name }} = {{ enumeration.Value }},
-{% endfor -%}
+{%- endfor %}
 }

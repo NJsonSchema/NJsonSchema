@@ -1,99 +1,99 @@
-﻿{% if HasDescription -%}
+﻿{%- if HasDescription %}
 /** {{ Description }} */
-{% endif -%}
+{%- endif %}
 {% if ExportTypes %}export {% endif %}class {{ ClassName }}{{ Inheritance }} {
-{% for property in Properties -%}
-{%     if property.HasDescription -%}
+{%- for property in Properties %}
+{%-     if property.HasDescription %}
     /** {{ property.Description }} */
-{%     endif -%}
+{%-     endif %}
     {% if property.IsReadOnly %}readonly {% endif %}{{ property.PropertyName }} = {% if property.IsArray %}ko.observableArray<{{ property.ArrayItemType }}>({% if property.HasDefaultValue %}{{ property.DefaultValue }}{% endif %}){% else %}ko.observable<{{ property.Type }}{{ property.TypePostfix }}>({% if property.HasDefaultValue %}{{ property.DefaultValue }}{% endif %}){% endif %};
-{% endfor -%}
+{%- endfor %}
 
-{% if HasDiscriminator -%}
+{%- if HasDiscriminator %}
 
     protected _discriminator: string;
-{% endif -%}
+{%- endif %}
 
-{% if HasBaseDiscriminator -%}
+{%- if HasBaseDiscriminator %}
     constructor() {
-{%     if HasInheritance -%}
+{%-     if HasInheritance %}
         super();
-{%     endif -%}
+{%-     endif %}
         this._discriminator = "{{ DiscriminatorName }}";
     }
-{% endif -%}
+{%- endif %}
 
     init(data?: any{% if HandleReferences %}, _mappings?: any{% endif %}) {
-{% if HasInheritance -%}
+{%- if HasInheritance %}
         super.init(data);
-{% endif -%}
+{%- endif %}
         if (data !== undefined) {
-{% for property in Properties -%}
+{%- for property in Properties %}
             var {{ property.PropertyName }}_: any; 
             {{ property.ConvertToClassCode | tab }}
             this.{{ property.PropertyName }}({{ property.PropertyName }}_);
 
-{% endfor -%}
+{%- endfor %}
         }
     }
 
     static fromJS(data: any{% if HandleReferences %}, _mappings?: any{% endif %}): {{ ClassName }}{% if HandleReferences %} | null{% endif %} {
-{% if HandleReferences -%}
-{%   if HasBaseDiscriminator -%}
-{%     for derivedClass in DerivedClasses -%}
+{%- if HandleReferences %}
+{%-   if HasBaseDiscriminator %}
+{%-     for derivedClass in DerivedClasses %}
         if (data["{{ BaseDiscriminator }}"] === "{{ derivedClass.Discriminator }}")
-{%       if derivedClass.IsAbstract -%}
+{%-       if derivedClass.IsAbstract %}
             throw new Error("The abstract class '{{ derivedClass.ClassName }}' cannot be instantiated.");
-{%       else -%}
+{%-       else %}
             return createInstance<{{ derivedClass.ClassName }}>(data, _mappings, {{ derivedClass.ClassName }});
-{%       endif -%}
-{%     endfor -%}
-{%   endif -%}
-{%   if IsAbstract -%}
+{%-       endif %}
+{%-     endfor %}
+{%-   endif %}
+{%-   if IsAbstract %}
         throw new Error("The abstract class '{{ ClassName }}' cannot be instantiated.");
-{%   else -%}
+{%-   else %}
         return createInstance<{{ ClassName }}>(data, _mappings, {{ ClassName }});
-{%   endif -%}
-{% else -%}
-{%   if HasBaseDiscriminator -%}
-{%     for derivedClass in DerivedClasses -%}
+{%-   endif %}
+{%- else %}
+{%-   if HasBaseDiscriminator %}
+{%-     for derivedClass in DerivedClasses %}
         if (data["{{ BaseDiscriminator }}"] === "{{ derivedClass.Discriminator }}") {
-{%       if derivedClass.IsAbstract -%}
+{%-       if derivedClass.IsAbstract %}
             throw new Error("The abstract class '{{ derivedClass.ClassName }}' cannot be instantiated.");
-{%       else -%}
+{%-       else %}
             let result = new {{ derivedClass.ClassName }}();
             result.init(data);
             return result;
-{%       endif -%}
+{%-       endif %}
         }
-{%     endfor -%}
-{%   endif -%}
-{%     if IsAbstract -%}
+{%-     endfor %}
+{%-   endif %}
+{%-     if IsAbstract %}
         throw new Error("The abstract class '{{ ClassName }}' cannot be instantiated.");
-{%     else -%}
+{%-     else %}
         let result = new {{ ClassName }}();
         result.init(data);
         return result;
-{%     endif -%}
-{% endif -%}
+{%-     endif %}
+{%- endif %}
     }
 
     toJSON(data?: any) {
         data = typeof data === 'object' ? data : {};
-{% if HasDiscriminator -%}
+{%- if HasDiscriminator %}
         data["{{ BaseDiscriminator }}"] = this._discriminator; 
-{% endif -%}
-{% for property in Properties -%}
+{%- endif %}
+{%- for property in Properties %}
         let {{ property.PropertyName }}_: any = this.{{ property.PropertyName }}(); 
         {{ property.ConvertToJavaScriptCode | tab }}
 
-{% endfor -%}
-{% if HasInheritance -%}
+{%- endfor %}
+{%- if HasInheritance %}
         super.toJSON(data);
-{% endif -%}
+{%- endif %}
         return data; 
     }
-{% if GenerateCloneMethod -%}
+{%- if GenerateCloneMethod %}
 
     clone() {
         const json = this.toJSON();
@@ -101,5 +101,5 @@
         result.init(json);
         return result;
     }
-{% endif -%}
+{%- endif %}
 }
