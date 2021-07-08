@@ -129,14 +129,14 @@ namespace NJsonSchema.Generation
                 schema.Format = JsonFormatStrings.Date;
             }
 
-            if (schema.Type == JsonObjectType.String && Regex.IsMatch(token.Value<string>(), "^[0-2][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9] [0-9][0-9]:[0-9][0-9](:[0-9][0-9])?$"))
-            {
-                schema.Format = JsonFormatStrings.DateTime;
-            }
-
             if (schema.Type == JsonObjectType.String && Regex.IsMatch(token.Value<string>(), "^[0-9][0-9]:[0-9][0-9](:[0-9][0-9])?$"))
             {
                 schema.Format = JsonFormatStrings.TimeSpan;
+            }
+
+            if (schema.Type == JsonObjectType.String && schema.Format == null && DateTime.TryParse(token.Value<string>(), null, System.Globalization.DateTimeStyles.RoundtripKind, out _))
+            {
+                schema.Format = JsonFormatStrings.DateTime;
             }
         }
 

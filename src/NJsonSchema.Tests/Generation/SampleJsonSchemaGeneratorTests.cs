@@ -1,4 +1,5 @@
-﻿using NJsonSchema.Generation;
+﻿using Newtonsoft.Json;
+using NJsonSchema.Generation;
 using Xunit;
 
 namespace NJsonSchema.Tests.Generation
@@ -121,6 +122,29 @@ namespace NJsonSchema.Tests.Generation
             //// Assert
             Assert.Equal(JsonObjectType.Array, property.Type);
             Assert.Equal(JsonObjectType.Integer, property.Item.ActualSchema.Type);
+        }
+
+        [Fact]
+        public void Iso8601Dates()
+        {
+            JsonConvert.DefaultSettings = () => new JsonSerializerSettings
+            {
+                DateParseHandling = DateParseHandling.None
+            };
+
+            //// Arrange
+            var data = @"{
+                ""FutureDate"": ""3500-08-03T23:51:56.000Z""
+            }";
+            var generator = new SampleJsonSchemaGenerator();
+
+            //// Act
+            var schema = generator.Generate(data);
+            var property = schema.Properties["FutureDate"];
+
+            //// Assert
+            Assert.Equal(JsonObjectType.String, property.Type);
+            Assert.Equal(JsonFormatStrings.DateTime, property.Format);
         }
     }
 }
