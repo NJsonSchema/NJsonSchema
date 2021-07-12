@@ -67,7 +67,12 @@ namespace NJsonSchema
                 typeNameHint = schema.Title;
             }
 
-            var lastSegment = typeNameHint?.Split('.').Last();
+            var lastSegment = typeNameHint;
+            var lastDotIndex = typeNameHint?.LastIndexOf('.') ?? -1;
+            if (lastDotIndex > -1)
+            {
+                lastSegment = typeNameHint.Substring(lastDotIndex + 1);
+            }
             return ConversionUtilities.ConvertToUpperCamelCase(lastSegment ?? "Anonymous", true);
         }
 
@@ -105,18 +110,45 @@ namespace NJsonSchema
         /// In case there are this would result in multiple underscores in a row, strips down to one underscore.
         /// Will trim any underscores at the end of the type name.
         /// </summary>
-        private string RemoveIllegalCharacters(string typeName)
+        private static string RemoveIllegalCharacters(string typeName)
         {
             // TODO: Find a way to support unicode characters up to 3.0
-            var legalTypeName = new StringBuilder(typeName);
+           
+            // first check if all are valid and we skip altogether
+            var invalid = false;
+            for (var i = 0; i < typeName.Length; i++)
+            {
+                var c = typeName[i];
+                if (i == 0 && (!IsEnglishLetterOrUnderScore(c) || char.IsDigit(c)))
+                {
+                    invalid = true;
+                    break;
+                }
 
-            var firstCharacter = legalTypeName[0].ToString();
-            var regexValidStartChar = new Regex("[a-zA-Z_]");
+                if (!IsEnglishLetterOrUnderScore(c) && !char.IsDigit(c))
+                {
+                    invalid = true;
+                    break;
+                }
+            }
+
+            if (!invalid)
+            {
+                return typeName;
+            }
+            
+            return DoRemoveIllegalCharacters(typeName);
+        }
+
+        private static string DoRemoveIllegalCharacters(string typeName)
+        {
+            var firstCharacter = typeName[0];
             var regexInvalidCharacters = new Regex("\\W");
 
-            if (!regexValidStartChar.IsMatch(firstCharacter))
+            var legalTypeName = new StringBuilder(typeName);
+            if (!IsEnglishLetterOrUnderScore(firstCharacter) || firstCharacter == '_')
             {
-                if (!regexInvalidCharacters.IsMatch(firstCharacter))
+                if (!regexInvalidCharacters.IsMatch(firstCharacter.ToString()))
                 {
                     legalTypeName.Insert(0, "_");
                 }
@@ -138,6 +170,11 @@ namespace NJsonSchema
 
             var legalTypeNameString = regexMoreThanOneUnderscore.Replace(legalTypeName.ToString(), "_");
             return legalTypeNameString.TrimEnd('_');
+        }
+        
+        private static bool IsEnglishLetterOrUnderScore(char c)
+        {
+            return (c>='A' && c<='Z') || (c>='a' && c<='z') || c == '_';
         }
     }
 }

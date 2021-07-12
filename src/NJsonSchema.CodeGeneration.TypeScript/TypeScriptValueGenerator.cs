@@ -44,7 +44,7 @@ namespace NJsonSchema.CodeGeneration.TypeScript
             {
                 if (schema.Default != null && useSchemaDefault)
                 {
-                    if (schema.Type.HasFlag(JsonObjectType.String) && 
+                    if (schema.Type.IsString() && 
                         _supportedFormatStrings.Contains(schema.Format))
                     {
                         return GetDefaultAsStringLiteral(schema);

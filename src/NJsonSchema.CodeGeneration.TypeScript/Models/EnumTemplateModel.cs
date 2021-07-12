@@ -57,12 +57,12 @@ namespace NJsonSchema.CodeGeneration.TypeScript.Models
                     {
                         var name = _schema.EnumerationNames.Count > i ?
                             _schema.EnumerationNames.ElementAt(i) :
-                            _schema.Type.HasFlag(JsonObjectType.Integer) ? "_" + value : value.ToString();
+                            _schema.Type.IsInteger() ? "_" + value : value.ToString();
 
                         entries.Add(new EnumerationItemModel
                         {
                             Name = _settings.EnumNameGenerator.Generate(i, name, value, _schema),
-                            Value = _schema.Type.HasFlag(JsonObjectType.Integer) ?
+                            Value = _schema.Type.IsInteger() ?
                                 value.ToString() :
                                 (_settings.TypeScriptVersion < 2.4m ? "<any>" : "") + "\"" + value + "\"",
                         });

@@ -124,7 +124,7 @@ namespace NJsonSchema.CodeGeneration
                    !schema.IsArray &&
                    (schema.IsEnumeration ||
                     schema.Type == JsonObjectType.None ||
-                    schema.Type.HasFlag(JsonObjectType.Object));
+                    schema.Type.IsObject());
         }
 
         /// <summary>Resolves the type of the dictionary value of the given schema (must be a dictionary schema).</summary>

@@ -136,10 +136,10 @@ namespace NJsonSchema.Visitors
                     await VisitAsync(schema.AnyOf.ElementAt(i), path + "/anyOf[" + i + "]", null, checkedObjects, o => ReplaceOrDelete(schema.AnyOf, index, (JsonSchema)o), cancellationToken).ConfigureAwait(false);
                 }
 
-                for (var i = 0; i < schema.OneOf.Count; i++)
+                for (var i = 0; i < schema._oneOf.Count; i++)
                 {
                     var index = i;
-                    await VisitAsync(schema.OneOf.ElementAt(i), path + "/oneOf[" + i + "]", null, checkedObjects, o => ReplaceOrDelete(schema.OneOf, index, (JsonSchema)o), cancellationToken).ConfigureAwait(false);
+                    await VisitAsync(schema._oneOf.ElementAt(i), path + "/oneOf[" + i + "]", null, checkedObjects, o => ReplaceOrDelete(schema._oneOf, index, (JsonSchema)o), cancellationToken).ConfigureAwait(false);
                 }
 
                 if (schema.Not != null)

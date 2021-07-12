@@ -223,7 +223,7 @@ namespace NJsonSchema
                 if (JsonSchemaSerialization.CurrentSchemaType == SchemaType.Swagger2)
                 {
                     if (AllowAdditionalProperties &&
-                        (Type.HasFlag(JsonObjectType.Object) || Type == JsonObjectType.None) &&
+                        (Type.IsObject() || Type == JsonObjectType.None) &&
                         !HasReference &&
                         !AllOf.Any() &&
                         !GetType().IsAssignableToTypeName("OpenApiParameter", TypeNameStyle.Name))

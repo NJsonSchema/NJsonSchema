@@ -55,24 +55,24 @@ namespace NJsonSchema.CodeGeneration
             }
 
             var actualSchema = schema is JsonSchemaProperty ? ((JsonSchemaProperty)schema).ActualTypeSchema : schema.ActualSchema;
-            if (actualSchema.IsEnumeration && !actualSchema.Type.HasFlag(JsonObjectType.Object) && actualSchema.Type != JsonObjectType.None)
+            if (actualSchema.IsEnumeration && !actualSchema.Type.IsObject() && actualSchema.Type != JsonObjectType.None)
             {
                 return GetEnumDefaultValue(schema, actualSchema, typeNameHint, typeResolver);
             }
 
-            if (schema.Type.HasFlag(JsonObjectType.String) && _unsupportedFormatStrings.Contains(schema.Format) == false)
+            if (schema.Type.IsString() && _unsupportedFormatStrings.Contains(schema.Format) == false)
             {
                 return GetDefaultAsStringLiteral(schema);
             }
             // TODO: Add conversion for format string, e.g. in C# DateTime.Parse()
 
-            if (schema.Type.HasFlag(JsonObjectType.Boolean))
+            if (schema.Type.IsBoolean())
             {
                 return schema.Default.ToString().ToLowerInvariant();
             }
 
-            if (schema.Type.HasFlag(JsonObjectType.Integer) ||
-                schema.Type.HasFlag(JsonObjectType.Number))
+            if (schema.Type.IsInteger() ||
+                schema.Type.IsNumber())
             {
                 return GetNumericValue(schema.Type, schema.Default, schema.Format);
             }

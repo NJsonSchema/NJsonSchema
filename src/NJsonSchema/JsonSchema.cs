@@ -34,19 +34,19 @@ namespace NJsonSchema
         private static Lazy<PropertyRenameAndIgnoreSerializerContractResolver> ContractResolver = new Lazy<PropertyRenameAndIgnoreSerializerContractResolver>(
             () => CreateJsonSerializerContractResolver(SerializationSchemaType));
 
-        private IDictionary<string, JsonSchemaProperty> _properties;
-        private IDictionary<string, JsonSchemaProperty> _patternProperties;
-        private IDictionary<string, JsonSchema> _definitions;
+        private ObservableDictionary<string, JsonSchemaProperty> _properties;
+        private ObservableDictionary<string, JsonSchemaProperty> _patternProperties;
+        private ObservableDictionary<string, JsonSchema> _definitions;
 
-        private ICollection<JsonSchema> _allOf;
-        private ICollection<JsonSchema> _anyOf;
-        private ICollection<JsonSchema> _oneOf;
+        private ObservableCollection<JsonSchema> _allOf;
+        private ObservableCollection<JsonSchema> _anyOf;
+        internal ObservableCollection<JsonSchema> _oneOf;
         private JsonSchema _not;
         private JsonSchema _dictionaryKey;
 
         private JsonObjectType _type;
         private JsonSchema _item;
-        private ICollection<JsonSchema> _items;
+        private ObservableCollection<JsonSchema> _items;
 
         private bool _allowAdditionalItems = true;
         private JsonSchema _additionalItemsSchema = null;
@@ -222,8 +222,8 @@ namespace NJsonSchema
         {
             get
             {
-                return Type.HasFlag(JsonObjectType.File) ||
-                    (Type.HasFlag(JsonObjectType.String) && Format == JsonFormatStrings.Binary);
+                return Type.IsFile() ||
+                    (Type.IsString() && Format == JsonFormatStrings.Binary);
             }
         }
 
@@ -249,9 +249,9 @@ namespace NJsonSchema
                     return AllOf.First(s => s.HasReference).ActualSchema;
                 }
 
-                if (AllOf.Any(s => s.Type.HasFlag(JsonObjectType.Object)))
+                if (AllOf.Any(s => s.Type.IsObject()))
                 {
-                    return AllOf.First(s => s.Type.HasFlag(JsonObjectType.Object)).ActualSchema;
+                    return AllOf.First(s => s.Type.IsObject()).ActualSchema;
                 }
 
                 return AllOf.FirstOrDefault()?.ActualSchema;
@@ -509,12 +509,12 @@ namespace NJsonSchema
         public IDictionary<string, JsonSchemaProperty> Properties
         {
             get { return _properties; }
-            internal set
+            private set
             {
                 if (_properties != value)
                 {
                     RegisterProperties(_properties, value);
-                    _properties = value;
+                    _properties = value as ObservableDictionary<string, JsonSchemaProperty> ?? new ObservableDictionary<string, JsonSchemaProperty>(value);
                 }
             }
         }
@@ -543,12 +543,12 @@ namespace NJsonSchema
         public IDictionary<string, JsonSchemaProperty> PatternProperties
         {
             get { return _patternProperties; }
-            internal set
+            private set
             {
                 if (_patternProperties != value)
                 {
                     RegisterSchemaDictionary(_patternProperties, value);
-                    _patternProperties = value;
+                    _patternProperties = value as ObservableDictionary<string, JsonSchemaProperty> ?? new ObservableDictionary<string, JsonSchemaProperty>(value);
                 }
             }
         }
@@ -577,12 +577,12 @@ namespace NJsonSchema
         public ICollection<JsonSchema> Items
         {
             get { return _items; }
-            internal set
+            private set
             {
                 if (_items != value)
                 {
                     RegisterSchemaCollection(_items, value);
-                    _items = value;
+                    _items = value as ObservableCollection<JsonSchema> ?? new ObservableCollection<JsonSchema>(value);
 
                     if (_items != null)
                     {
@@ -612,12 +612,12 @@ namespace NJsonSchema
         public IDictionary<string, JsonSchema> Definitions
         {
             get { return _definitions; }
-            internal set
+            private set
             {
                 if (_definitions != value)
                 {
                     RegisterSchemaDictionary(_definitions, value);
-                    _definitions = value;
+                    _definitions = value as ObservableDictionary<string, JsonSchema> ?? new ObservableDictionary<string, JsonSchema>(value);
                 }
             }
         }
@@ -627,12 +627,12 @@ namespace NJsonSchema
         public ICollection<JsonSchema> AllOf
         {
             get { return _allOf; }
-            internal set
+            private set
             {
                 if (_allOf != value)
                 {
                     RegisterSchemaCollection(_allOf, value);
-                    _allOf = value;
+                    _allOf = value as ObservableCollection<JsonSchema> ?? new ObservableCollection<JsonSchema>(value);
                 }
             }
         }
@@ -642,12 +642,12 @@ namespace NJsonSchema
         public ICollection<JsonSchema> AnyOf
         {
             get { return _anyOf; }
-            internal set
+            private set
             {
                 if (_anyOf != value)
                 {
                     RegisterSchemaCollection(_anyOf, value);
-                    _anyOf = value;
+                    _anyOf = value as ObservableCollection<JsonSchema> ?? new ObservableCollection<JsonSchema>(value);
                 }
             }
         }
@@ -656,17 +656,17 @@ namespace NJsonSchema
         [JsonIgnore]
         public ICollection<JsonSchema> OneOf
         {
-            get { return _oneOf; }
-            internal set
+            get => _oneOf;
+            private set
             {
                 if (_oneOf != value)
                 {
                     RegisterSchemaCollection(_oneOf, value);
-                    _oneOf = value;
+                    _oneOf = value as ObservableCollection<JsonSchema> ?? new ObservableCollection<JsonSchema>(value); 
                 }
             }
-        }
-
+        }        
+        
         /// <summary>Gets or sets a value indicating whether additional items are allowed (default: true). </summary>
         /// <remarks>If this property is set to <c>false</c>, then <see cref="AdditionalItemsSchema"/> is set to <c>null</c>. </remarks>
         [JsonIgnore]
@@ -745,25 +745,25 @@ namespace NJsonSchema
 
         /// <summary>Gets a value indicating whether the schema describes an object.</summary>
         [JsonIgnore]
-        public bool IsObject => Type.HasFlag(JsonObjectType.Object);
+        public bool IsObject => Type.IsObject();
 
         /// <summary>Gets a value indicating whether the schema represents an array type (an array where each item has the same type).</summary>
         [JsonIgnore]
-        public bool IsArray => Type.HasFlag(JsonObjectType.Array) && (Items == null || Items.Count == 0);
+        public bool IsArray => Type.IsArray() && (Items == null || Items.Count == 0);
 
         /// <summary>Gets a value indicating whether the schema represents an tuple type (an array where each item may have a different type).</summary>
         [JsonIgnore]
-        public bool IsTuple => Type.HasFlag(JsonObjectType.Array) && Items?.Any() == true;
+        public bool IsTuple => Type.IsArray() && Items?.Any() == true;
 
         /// <summary>Gets a value indicating whether the schema represents a dictionary type (no properties and AdditionalProperties or PatternProperties contain a schema).</summary>
         [JsonIgnore]
-        public bool IsDictionary => Type.HasFlag(JsonObjectType.Object) &&
+        public bool IsDictionary => Type.IsObject() &&
                                     ActualProperties.Count == 0 &&
                                     (AdditionalPropertiesSchema != null || PatternProperties.Any());
 
         /// <summary>Gets a value indicating whether this is any type (e.g. any in TypeScript or object in CSharp).</summary>
         [JsonIgnore]
-        public bool IsAnyType => (Type.HasFlag(JsonObjectType.Object) || Type == JsonObjectType.None) &&
+        public bool IsAnyType => (Type.IsObject() || Type == JsonObjectType.None) &&
                                  Reference == null &&
                                  AllOf.Count == 0 &&
                                  AnyOf.Count == 0 &&
@@ -791,12 +791,12 @@ namespace NJsonSchema
                 return true;
             }
 
-            if (Type.HasFlag(JsonObjectType.Null))
+            if (Type.IsNull())
             {
                 return true;
             }
 
-            if ((Type == JsonObjectType.None || Type.HasFlag(JsonObjectType.Null)) && OneOf.Any(o => o.IsNullable(schemaType)))
+            if ((Type.IsNone() || Type.IsNull()) && OneOf.Any(o => o.IsNullable(schemaType)))
             {
                 return true;
             }

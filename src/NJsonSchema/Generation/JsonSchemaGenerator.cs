@@ -246,8 +246,8 @@ namespace NJsonSchema.Generation
                         {
                             if (schema.Type == JsonObjectType.None)
                             {
-                                schema.OneOf.Add(new JsonSchema { Type = JsonObjectType.None });
-                                schema.OneOf.Add(new JsonSchema { Type = JsonObjectType.Null });
+                                schema._oneOf.Add(new JsonSchema { Type = JsonObjectType.None });
+                                schema._oneOf.Add(new JsonSchema { Type = JsonObjectType.Null });
                             }
                             else
                             {
@@ -279,7 +279,7 @@ namespace NJsonSchema.Generation
             {
                 if (Settings.SchemaType == SchemaType.JsonSchema)
                 {
-                    referencingSchema.OneOf.Add(new JsonSchema { Type = JsonObjectType.Null });
+                    referencingSchema._oneOf.Add(new JsonSchema { Type = JsonObjectType.Null });
                 }
                 else if (Settings.SchemaType == SchemaType.OpenApi3 || Settings.GenerateCustomNullableProperties)
                 {
@@ -291,13 +291,13 @@ namespace NJsonSchema.Generation
             var useDirectReference = Settings.AllowReferencesWithProperties ||
                 !JsonConvert.DeserializeObject<JObject>(JsonConvert.SerializeObject(referencingSchema)).Properties().Any(); // TODO: Improve performance
 
-            if (useDirectReference && referencingSchema.OneOf.Count == 0)
+            if (useDirectReference && referencingSchema._oneOf.Count == 0)
             {
                 referencingSchema.Reference = referencedSchema.ActualSchema;
             }
             else if (Settings.SchemaType != SchemaType.Swagger2)
             {
-                referencingSchema.OneOf.Add(new JsonSchema
+                referencingSchema._oneOf.Add(new JsonSchema
                 {
                     Reference = referencedSchema.ActualSchema
                 });

@@ -101,22 +101,22 @@ namespace NJsonSchema.CodeGeneration.TypeScript
                     JsonObjectType.String;
             }
 
-            if (type.HasFlag(JsonObjectType.Number))
+            if (type.IsNumber())
             {
                 return "number";
             }
 
-            if (type.HasFlag(JsonObjectType.Integer) && !schema.ActualTypeSchema.IsEnumeration)
+            if (type.IsInteger() && !schema.ActualTypeSchema.IsEnumeration)
             {
                 return ResolveInteger(schema.ActualTypeSchema, typeNameHint);
             }
 
-            if (type.HasFlag(JsonObjectType.Boolean))
+            if (type.IsBoolean())
             {
                 return "boolean";
             }
 
-            if (type.HasFlag(JsonObjectType.String) && !schema.ActualTypeSchema.IsEnumeration)
+            if (type.IsString() && !schema.ActualTypeSchema.IsEnumeration)
             {
                 return ResolveString(schema.ActualTypeSchema, typeNameHint);
             }
@@ -133,7 +133,7 @@ namespace NJsonSchema.CodeGeneration.TypeScript
                 return GetOrGenerateTypeName(schema, typeNameHint);
             }
 
-            if (schema.Type.HasFlag(JsonObjectType.Array))
+            if (schema.Type.IsArray())
             {
                 return ResolveArrayOrTuple(schema, typeNameHint, addInterfacePrefix);
             }
@@ -142,7 +142,7 @@ namespace NJsonSchema.CodeGeneration.TypeScript
             {
                 var prefix = addInterfacePrefix &&
                     SupportsConstructorConversion(schema.AdditionalPropertiesSchema) &&
-                    schema.AdditionalPropertiesSchema?.ActualSchema.Type.HasFlag(JsonObjectType.Object) == true ? "I" : "";
+                    schema.AdditionalPropertiesSchema?.ActualSchema.Type.IsObject() == true ? "I" : "";
 
                 var valueType = ResolveDictionaryValueType(schema, "any");
                 if (valueType != "any")
@@ -298,7 +298,7 @@ namespace NJsonSchema.CodeGeneration.TypeScript
         {
             if (schema.Item != null)
             {
-                var isObject = schema.Item?.ActualSchema.Type.HasFlag(JsonObjectType.Object) == true;
+                var isObject = schema.Item?.ActualSchema.Type.IsObject() == true;
                 var isDictionary = schema.Item?.ActualSchema.IsDictionary == true;
                 var prefix = addInterfacePrefix && SupportsConstructorConversion(schema.Item) && isObject && !isDictionary ? "I" : "";
 
