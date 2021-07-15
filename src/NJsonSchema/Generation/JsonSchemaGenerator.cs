@@ -351,15 +351,10 @@ namespace NJsonSchema.Generation
         {
             var contextualType = typeDescription.ContextualType;
 
-            dynamic displayAttribute = contextualType.ContextAttributes.FirstAssignableToTypeNameOrDefault("System.ComponentModel.DataAnnotations.DisplayAttribute");
-            if (displayAttribute != null)
+            var name = contextualType.GetDisplayName();
+            if (name != null) 
             {
-                // GetName returns null if the Name property on the attribute is not specified.
-                var name = displayAttribute.GetName();
-                if (name != null) 
-                {
-                    schema.Title = name;
-                }
+                schema.Title = name;
             }
 
             dynamic defaultValueAttribute = contextualType.ContextAttributes.FirstAssignableToTypeNameOrDefault("System.ComponentModel.DefaultValueAttribute");
@@ -719,6 +714,13 @@ namespace NJsonSchema.Generation
                         schema.Enumeration.Add(JsonConvert.DeserializeObject<string>(json));
                     }
                 }
+
+                var contextualFieldType = contextualType.GetField(enumName);
+                schema.EnumerationMetaData.Add(new EnumerationMetaData
+                {
+                    Title = contextualFieldType?.GetDisplayName() ?? enumName,
+                    Description = contextualFieldType?.GetDescription()
+                });
 
                 schema.EnumerationNames.Add(enumName);
             }

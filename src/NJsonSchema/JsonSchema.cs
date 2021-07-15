@@ -968,6 +968,11 @@ namespace NJsonSchema
             {
                 EnumerationNames = new Collection<string>();
             }
+            
+            if (EnumerationMetaData == null)
+            {
+                EnumerationMetaData = new Collection<EnumerationMetaData>();
+            }
         }
     }
 }

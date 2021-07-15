@@ -1,6 +1,8 @@
 using System;
 using System.Linq;
 using System.Collections.Generic;
+using System.ComponentModel;
+using System.ComponentModel.DataAnnotations;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
@@ -107,9 +109,48 @@ namespace NJsonSchema.Tests.Generation
             Assert.Equal("Value2", schema.EnumerationNames.Last());
         }
 
-        [Flags]
-        public enum EnumWithFlags
+        [Fact]
+        public async Task When_ComponentModel_Attributes_are_not_used_meta_data_has_only_the_names()
         {
+            // Arrange
+
+            // Act
+            var schema = JsonSchema.FromType<MyEnum>();
+            var json = schema.ToJson();
+
+            // Assert
+            Assert.Equal("Value1", schema.EnumerationMetaData.First().Title);
+            Assert.Equal("Value2", schema.EnumerationMetaData.Last().Title);
+
+            Assert.Null(schema.EnumerationMetaData.First().Description);
+            Assert.Null(schema.EnumerationMetaData.Last().Description);
+        }
+
+        public enum MyEnumWithAttributes {
+            [Display(Name = "My name 1", Description = "My description 1")] Value1,
+            [Description("My description 2")]
+            Value2
+        }
+
+        [Fact]
+        public async Task When_ComponentModel_Attributes_are_used_on_enum_values_its_used_in_meta_data()
+        {
+            // Arrange
+
+            // Act
+            var schema = JsonSchema.FromType<MyEnumWithAttributes>();
+            var json = schema.ToJson();
+
+            // Assert
+            Assert.Equal("My name 1", schema.EnumerationMetaData.First().Title);
+            Assert.Equal("Value2", schema.EnumerationMetaData.Last().Title);
+
+            Assert.Equal("My description 1", schema.EnumerationMetaData.First().Description);
+            Assert.Equal("My description 2", schema.EnumerationMetaData.Last().Description);
+        }
+
+        [Flags]
+        public enum EnumWithFlags {
             Foo = 1,
             Bar = 2,
             Baz = 4,

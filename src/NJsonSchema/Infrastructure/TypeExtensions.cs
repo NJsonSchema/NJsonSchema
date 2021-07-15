@@ -56,6 +56,15 @@ namespace NJsonSchema.Infrastructure
             return member.Name;
         }
 
+        /// <summary>Gets the name of the given member (based on the DisplayAttribute).</summary>
+        /// <returns>The name or null if no name is available.</returns>
+        public static string GetDisplayName(this ContextualType contextualType)
+        {
+            dynamic displayAttribute = contextualType.ContextAttributes.FirstAssignableToTypeNameOrDefault("System.ComponentModel.DataAnnotations.DisplayAttribute");
+            // GetName returns null if the Name property on the attribute is not specified.
+            return displayAttribute?.GetName();
+        }
+
         /// <summary>Gets the description of the given member (based on the DescriptionAttribute, DisplayAttribute or XML Documentation).</summary>
         /// <param name="type">The member info</param>
         /// <param name="attributeType">The attribute type to check.</param>

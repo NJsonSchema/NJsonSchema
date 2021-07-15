@@ -16,6 +16,7 @@ using Namotion.Reflection;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using NJsonSchema.Collections;
+using NJsonSchema.Generation;
 using NJsonSchema.Infrastructure;
 
 namespace NJsonSchema
@@ -131,6 +132,10 @@ namespace NJsonSchema
         /// <summary>Gets or sets the enumeration names (optional, draft v5). </summary>
         [JsonIgnore]
         public Collection<string> EnumerationNames { get; set; }
+        
+        /// <summary>Gets or sets the enumeration meta data (custom extension, sets 'x-enumMetaData').</summary>
+        [JsonIgnore]
+        public Collection<EnumerationMetaData> EnumerationMetaData { get; set; }
 
         /// <summary>Gets or sets a value indicating whether the maximum value is excluded. </summary>
         [JsonProperty("exclusiveMaximum", DefaultValueHandling = DefaultValueHandling.IgnoreAndPopulate)]
@@ -393,6 +398,14 @@ namespace NJsonSchema
         {
             get { return EnumerationNames != null && EnumerationNames.Count > 0 ? EnumerationNames : null; }
             set { EnumerationNames = value != null ? new ObservableCollection<string>(value) : new ObservableCollection<string>(); }
+        }
+
+        /// <summary>Gets or sets the enumeration meta data (custom extension, sets 'x-enumMetaData').</summary>
+        [JsonProperty("x-enumMetaData", DefaultValueHandling = DefaultValueHandling.IgnoreAndPopulate)]
+        internal Collection<EnumerationMetaData> EnumerationMetaDataRaw
+        {
+            get { return EnumerationMetaData != null && EnumerationMetaData.Count > 0 ? EnumerationMetaData : null; }
+            set { EnumerationMetaData = value != null ? new ObservableCollection<EnumerationMetaData>(value) : new ObservableCollection<EnumerationMetaData>(); }
         }
 
         [JsonProperty("enum", DefaultValueHandling = DefaultValueHandling.IgnoreAndPopulate)]
